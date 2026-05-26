@@ -1,0 +1,10 @@
+__pycache__/
+*.py[cod]
+*.pyo
+.env
+*.csv
+*.parquet
+*.h5
+*.pkl
+data/cache/
+.DS_Store
