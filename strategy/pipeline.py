@@ -103,7 +103,7 @@ class StrategyPipeline:
             cands = [m for m in members if m != target]
 
             # ---- dynamic predictors (history only, LASSO/ElasticNet) ----
-            pc = psel.select(target, cands, returns.reindex(tr_idx))
+            pc = psel.select(target, cands, returns.reindex(tr_idx), prices.loc[tr_idx])
             preds = pc.selected
 
             # ---- regressors (fit history, predict OOS block) ----
@@ -112,9 +112,9 @@ class StrategyPipeline:
 
             self.log_rows.append(dict(
                 sector=cfg_sector["name"], etf=etf, retrain_date=fold.retrain_date.date(),
-                target=target, predictors=",".join(preds),
+                selected_target=target, selected_predictors=",".join(preds),
                 shadow_val_r2=round(sh.val_r2, 4), return_val_r2=round(rr.val_r2, 4),
-                top_coef=",".join(f"{k}:{v:.3f}" for k, v in pc.coefficients.head(3).items()),
+                top_coefficients=",".join(f"{k}:{v:.3f}" for k, v in pc.coefficients.head(3).items()),
             ))
 
             for d in pr_idx:
@@ -156,13 +156,14 @@ class StrategyPipeline:
             vol_e = etf_ret.rolling(20).std().shift(1)
             vol_rel = (vol_t / vol_e).get(d, np.nan)
             rows.append(dict(date=d,
+                             target=t,
                              sect_etf_ret=etf_ret.get(d, np.nan),
                              sect_target_minus_etf=tr.get(d, np.nan) - etf_ret.get(d, np.nan),
                              sect_px_rel_etf=(prices[t] / etf_px).get(d, np.nan),
                              sect_vol_rel_etf=vol_rel,
                              sect_corr_etf=corr_etf,
                              sect_corr_pred=corr_pred))
-        sf = pd.DataFrame(rows).set_index("date")
+        sf = pd.DataFrame(rows).set_index(["date", "target"])
         # EWM-z normalize the non-bounded continuous ones
         for c in ["sect_px_rel_etf", "sect_vol_rel_etf"]:
             _, _, z = ewm_z(sf[c], span)
@@ -171,6 +172,7 @@ class StrategyPipeline:
 
     def build_panel(self, md, folds, split) -> pd.DataFrame:
         def _build():
+            self.log_rows = []
             tech = self._technical_all(md)
             rfb = ResidualFeatureBuilder(self.cfg)
             sector_keys = list(SECTORS.keys())
@@ -182,25 +184,34 @@ class StrategyPipeline:
                     continue
                 oos = oos.sort_values("date").reset_index(drop=True)
 
-                # residual / anomaly features on the per-sector active-target series
-                price = oos.set_index("date")["target_price"]
-                shadow = oos.set_index("date")["shadow_price"]
-                pret = oos.set_index("date")["predicted_return"]
-                # forward return label per active target ticker
-                fwd = self._forward_return(md, oos, self.cfg.label_horizon)
-                resid = rfb.build(price, shadow, pret.reindex(price.index), fwd)
+                # residual / anomaly features are normalized per target ticker so
+                # the active target switch inside a sector never mixes scales.
+                resid_parts = []
+                label_parts = []
+                for target, sub in oos.groupby("target", sort=False):
+                    sub = sub.sort_values("date")
+                    price = sub.set_index("date")["target_price"]
+                    shadow = sub.set_index("date")["shadow_price"]
+                    pret = sub.set_index("date")["predicted_return"]
+                    fwd_sub = self._forward_return(md, sub, self.cfg.label_horizon)
+                    resid_sub = rfb.build(price, shadow, pret.reindex(price.index), fwd_sub)
+                    resid_sub["target"] = target
+                    resid_parts.append(resid_sub)
+                    label_parts.append(make_labels_from_fwd(fwd_sub, self.cfg).rename(target))
+                resid = pd.concat(resid_parts).set_index("target", append=True).reorder_levels([0, 1]).sort_index()
+                labels = pd.concat(label_parts, axis=1).stack().sort_index()
                 resid_cols = ResidualFeatureBuilder.feature_columns(resid)
 
                 # technical features per row (active target on that date)
                 tech_rows = pd.DataFrame(
                     [tech[t].loc[d] if d in tech[t].index else pd.Series(dtype=float)
                      for d, t in zip(oos["date"], oos["target"])]
-                ).set_index(oos["date"].values)
+                ).set_index(pd.MultiIndex.from_arrays([oos["date"].values, oos["target"].values], names=["date", "target"]))
 
                 # sector features
                 sect = self._sector_features(md, oos, etf)
 
-                df = oos.set_index("date").copy()
+                df = oos.set_index(["date", "target"]).copy()
                 # df already carries shadow_price (kept for plots); take the rest
                 # of the residual features from the builder, incl. predicted_return.
                 df = df.drop(columns=["predicted_return"])
@@ -208,18 +219,24 @@ class StrategyPipeline:
                 df = df.join(resid[resid_join]).join(tech_rows).join(sect)
                 df["next_ret"] = self._next_return(md, oos).values
                 df["ann_vol"] = self._trailing_vol(md, oos).values
-                df["label"] = make_labels_from_fwd(fwd, self.cfg)
+                df["label"] = labels.reindex(df.index).values
                 df["residual_z"] = resid["residual_ewm_z"]
                 # spread signal: overpriced (resid_z>0) -> short, underpriced -> long
                 df["spread_signal"] = -np.sign(df["residual_z"].fillna(0)).astype(int)
                 # sector one-hot
                 for k in sector_keys:
                     df[f"oh_{k}"] = int(etf == k)
-                df["date"] = df.index
+                df["date"] = df.index.get_level_values(0)
+                df["target"] = df.index.get_level_values(1)
                 panels.append(df.reset_index(drop=True))
             panel = pd.concat(panels, ignore_index=True)
-            return panel
-        return self.cache.cached("feature_panel", _build, "panel", verbose=True)
+            return {"panel": panel, "retrain_log": pd.DataFrame(self.log_rows)}
+        obj = self.cache.cached("feature_panel", _build, "panel", verbose=True)
+        if isinstance(obj, dict):
+            self.log_rows = obj.get("retrain_log", pd.DataFrame()).to_dict("records")
+            return obj["panel"]
+        self.log_rows = []
+        return obj
 
     # ---- per-ticker return lookups (active target varies by row) -------- #
     @staticmethod
@@ -259,7 +276,8 @@ class StrategyPipeline:
         feature_cols = [c for c in panel.columns if c not in (
             "date", "etf", "sector", "target", "predictors", "target_price",
             "shadow_price", "next_ret", "label", "spread_signal",
-            "ann_vol", "residual_z")]
+            "ann_vol", "residual_z", "price_residual", "residual_ewm_mean",
+            "residual_ewm_std", "residual_roll_mean", "residual_roll_std")]
         # keep only numeric features, drop rows without label
         data = panel.dropna(subset=["label"]).copy()
         X = data[feature_cols].apply(pd.to_numeric, errors="coerce")
@@ -273,12 +291,22 @@ class StrategyPipeline:
         cut = dev["date"].quantile(0.8)
         tr, val = dev[dev["date"] <= cut], dev[dev["date"] > cut]
 
+        split_diagnostics = {
+            "train_class_dist": tr["label"].value_counts(dropna=False).sort_index().to_dict(),
+            "val_class_dist": val["label"].value_counts(dropna=False).sort_index().to_dict(),
+            "test_class_dist": test["label"].value_counts(dropna=False).sort_index().to_dict(),
+            "train_rows": int(len(tr)),
+            "val_rows": int(len(val)),
+            "test_rows": int(len(test)),
+        }
+
         clf = GlobalSignalClassifier(self.cfg)
 
         def _fit():
             clf.fit(tr[feature_cols], tr["label"], val[feature_cols], val["label"])
             return dict(params=clf.result_.params, val_metrics=clf.result_.val_metrics,
-                        importance=clf.result_.feature_importance, features=feature_cols)
+                        importance=clf.result_.feature_importance, features=feature_cols,
+                        split_diagnostics=split_diagnostics)
         res = self.cache.cached("classifier", _fit, "clf", verbose=True)
 
         # rebuild a live model from cached params (model object itself also cacheable,
@@ -300,6 +328,7 @@ class StrategyPipeline:
             "sector": test["sector"].values,
             "target": test["target"].values,
             "signal": signal.values,
+            "pre_filter_signal": signal.values,
             "residual_z": test["residual_z"].values,
             "spread_signal": test["spread_signal"].values,
             "next_ret": test["next_ret"].values,
@@ -337,7 +366,7 @@ class StrategyPipeline:
 
         hr("BACKTEST (locked test set)")
         bt = self.backtest(clf, test, feature_cols)
-        self._print_results(bt, res)
+        self._print_results(bt, res, log)
 
         if self.cfg.make_plots:
             try:
@@ -351,7 +380,7 @@ class StrategyPipeline:
         return dict(market_data=md, panel=panel, classifier=clf, backtest=bt,
                     clf_result=res, split=split)
 
-    def _print_results(self, bt, res):
+    def _print_results(self, bt, res, log):
         m = bt.metrics
         print("  Performance:")
         for k in ["cumulative_return", "annualized_return", "annualized_vol", "sharpe",
@@ -363,6 +392,19 @@ class StrategyPipeline:
         print("\n  Confusion matrix:\n", bt.confusion.to_string())
         print("\n  Classification report:\n", bt.report)
         print("\n  Top feature importances:\n", res["importance"].head(15).round(4).to_string())
+        if "split_diagnostics" in res:
+            print("\n  Split diagnostics:\n", pd.DataFrame(res["split_diagnostics"]).to_string())
+
+        print("\n  Signal distribution (pre-filter):\n", bt.trades["signal"].value_counts().sort_index().to_string())
+        print("\n  Position distribution (post-filter):\n", bt.trades["position"].value_counts().sort_index().to_string())
+        print("\n  Average confidence by class:\n", bt.trades.groupby("signal")["confidence"].mean().round(4).to_string())
+
+        if log is not None and not log.empty:
+            print("\n  Target selection counts:\n", log["selected_target"].value_counts().to_string())
+            predictor_counts = pd.Series(
+                [p for row in log["selected_predictors"].fillna("") for p in str(row).split(",") if p]
+            ).value_counts()
+            print("\n  Predictor selection counts:\n", predictor_counts.to_string())
 
 
 def make_labels_from_fwd(fwd: pd.Series, cfg) -> pd.Series:

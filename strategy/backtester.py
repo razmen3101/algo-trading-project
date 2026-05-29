@@ -32,14 +32,18 @@ class Backtester:
     # ---- position construction (applies all trade filters) ------------- #
     def _positions(self, panel: pd.DataFrame) -> pd.DataFrame:
         df = panel.copy()
-        proba = df[["P_short", "P_flat", "P_long"]].values
-        max_p = proba.max(axis=1)
-        df["confidence"] = max_p
+        df["confidence"] = np.where(
+            df["signal"] == 1, df["P_long"],
+            np.where(df["signal"] == -1, df["P_short"], df["P_flat"])
+        )
 
         raw = df["signal"].astype(float)
 
         keep = np.ones(len(df), dtype=bool)
-        keep &= max_p >= self.cfg.confidence_threshold
+        keep &= raw != 0
+        keep &= df["confidence"].fillna(0).values >= self.cfg.confidence_threshold
+        if "P_flat" in df:
+            keep &= df["P_flat"].fillna(0).values < self.cfg.flat_probability_block
         if "residual_z" in df:
             keep &= df["residual_z"].abs().fillna(0).values >= self.cfg.min_residual_z
         if "ann_vol" in df:
@@ -49,7 +53,7 @@ class Backtester:
             agree = (np.sign(raw) == np.sign(df["spread_signal"])) | (df["spread_signal"] == 0)
             keep &= agree.values
 
-        size = max_p if self.cfg.size_by_confidence else np.ones(len(df))
+        size = df["confidence"].clip(lower=0).values if self.cfg.size_by_confidence else np.ones(len(df))
         df["position"] = np.where(keep, raw * size, 0.0)
         return df
 

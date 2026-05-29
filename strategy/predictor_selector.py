@@ -1,9 +1,10 @@
 """PredictorSelector — LASSO / ElasticNet *feature selection* only.
 
 Given the target's price series and the candidate predictors' price series
-(all within the training window), fit a sparse linear model on returns and keep
-the top-N predictors by absolute coefficient. This model is NEVER used to
-predict live — it only decides which predictor stocks feed the XGBoost models.
+(all within the training window), fit a sparse linear model on either returns
+or log-indexed prices and keep the top-N predictors by absolute coefficient.
+This model is NEVER used to predict live — it only decides which predictor
+stocks feed the XGBoost models.
 
 No future / validation / test data may influence the selection: the caller
 passes a history-only slice, and the internal CV is a chronological
@@ -31,14 +32,33 @@ class PredictorSelector:
     def __init__(self, cfg):
         self.cfg = cfg
 
-    def select(self, target: str, candidates: list[str],
-               returns: pd.DataFrame) -> PredictorChoice:
-        """`returns` is the history-only return frame (rows = dates)."""
+    def _prepare_data(self, target: str, candidates: list[str],
+                      returns: pd.DataFrame, prices: pd.DataFrame | None):
+        if self.cfg.predictor_selection_input == "log_indexed_prices":
+            if prices is None:
+                return None
+            cols = [target] + [c for c in candidates if c in prices.columns and c != target]
+            data = prices[cols].dropna()
+            if len(data) < 60 or len(cols) <= 1:
+                return None
+            return np.log(data / data.iloc[0])
+
         cands = [c for c in candidates if c in returns.columns and c != target]
         data = returns[[target] + cands].dropna()
         if len(data) < 60 or not cands:
+            return None
+        return data
+
+    def select(self, target: str, candidates: list[str],
+               returns: pd.DataFrame, prices: pd.DataFrame | None = None) -> PredictorChoice:
+        """History-only selection on returns or log-indexed prices."""
+        data = self._prepare_data(target, candidates, returns, prices)
+        if data is None:
+            cands = [c for c in candidates if c in returns.columns and c != target]
             return PredictorChoice(target, cands[: self.cfg.top_n_predictors],
                                    pd.Series(dtype=float), self.cfg.feature_selection_method)
+
+        cands = [c for c in data.columns if c != target]
 
         y = data[target].values
         X = data[cands].values

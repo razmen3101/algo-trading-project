@@ -49,7 +49,7 @@ class StrategyConfig:
     selection_alphas:         int = 20    # alphas tried in the CV path
 
     # ---- Regressors (XGBoost) ----
-    return_horizon: int = 5   # trading days for the return regressor label
+    return_horizon: int = 1   # trading days for the return regressor label
     reg_params: dict = field(default_factory=lambda: dict(
         n_estimators=300, learning_rate=0.03, max_depth=3,
         subsample=0.8, colsample_bytree=0.8,
@@ -66,7 +66,7 @@ class StrategyConfig:
     week52_win:      int = 252
 
     # ---- Labels ----
-    label_horizon:        int = 5
+    label_horizon:        int = 1
     positive_threshold:   float = 0.01
     negative_threshold:   float = -0.01
     vol_adjusted_labels:  bool = False   # if True, thresholds scale by rolling vol
@@ -84,22 +84,25 @@ class StrategyConfig:
     random_search_iter: int = 25
 
     # ---- Backtest ----
-    confidence_threshold: float = 0.55
+    confidence_threshold: float = 0.65
     transaction_cost_bps: float = 5.0
-    min_residual_z:       float = 0.5    # skip trades with |residual_z| below this
+    min_residual_z:       float = 1.25    # skip trades with |residual_z| below this
     max_vol_filter:       float = 0.60   # skip trades when annualized vol above this
     require_agreement:    bool = True    # spread signal must agree with classifier
     size_by_confidence:   bool = True
+    flat_probability_block: float = 0.40
 
     # ---- Infra ----
     cache_dir:        str = ".cache"
-    force_recompute:  bool = False
+    force_recompute:  bool = True
     # Opt-in: skip TLS verification when downloading (needed only on networks
     # with a corporate proxy / MITM whose root CA isn't in certifi's bundle).
     insecure_ssl:     bool = False
     make_plots:       bool = True
     plots_dir:        str = "reports"
     random_state:     int = 42
+    price_transform:  str = "log_indexed"
+    predictor_selection_input: str = "returns"
 
     # ------------------------------------------------------------------ #
     def to_dict(self) -> dict:

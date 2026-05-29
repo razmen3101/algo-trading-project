@@ -46,12 +46,42 @@ class DynamicShadowPriceModel:
         self.cfg = cfg
         self.model = XGBRegressor(**cfg.reg_params)
 
+    def _indexed_log_frame(self, prices: pd.DataFrame, predictors: list[str], target: str,
+                           base_idx: pd.Index | pd.DatetimeIndex) -> tuple[pd.DataFrame, pd.Series, float]:
+        idx = pd.Index(base_idx)
+        if len(idx) == 0:
+            return pd.DataFrame(index=prices.index), pd.Series(dtype=float), float("nan")
+
+        target_base = prices[target].reindex(idx).dropna()
+        if target_base.empty:
+            return pd.DataFrame(index=prices.index), pd.Series(dtype=float), float("nan")
+
+        base_target_price = float(target_base.iloc[0])
+        y = np.log(prices[target] / base_target_price).rename("_y")
+
+        feats = {}
+        for pred in predictors:
+            pred_base = prices[pred].reindex(idx).dropna()
+            if pred_base.empty:
+                continue
+            base_pred_price = float(pred_base.iloc[0])
+            feats[f"px_{pred}"] = np.log(prices[pred] / base_pred_price)
+        return pd.DataFrame(feats, index=prices.index), y, base_target_price
+
     def fit_predict(self, prices: pd.DataFrame, target: str, predictors: list[str],
                     train_idx, predict_idx, val_idx=None) -> ShadowResult:
-        feats = _feature_frame(prices, predictors, with_returns=False)
-        y = prices[target]
+        train_dates = pd.Index(train_idx)
+        safe_train_idx = train_dates[:-self.cfg.return_horizon] if len(train_dates) > self.cfg.return_horizon else train_dates[:0]
+        safe_val_idx = pd.Index(val_idx)[:-self.cfg.return_horizon] if val_idx is not None and len(val_idx) > self.cfg.return_horizon else pd.Index([])
 
-        tr = feats.loc[train_idx].join(y.rename("_y")).dropna()
+        if self.cfg.price_transform == "log_indexed":
+            feats, y, base_target_price = self._indexed_log_frame(prices, predictors, target, safe_train_idx)
+        else:
+            feats = _feature_frame(prices, predictors, with_returns=False)
+            y = prices[target].rename("_y")
+            base_target_price = float(prices[target].reindex(safe_train_idx).dropna().iloc[0]) if len(safe_train_idx) and not prices[target].reindex(safe_train_idx).dropna().empty else float("nan")
+
+        tr = feats.loc[safe_train_idx].join(y).dropna()
         if len(tr) < 30:
             idx = prices.loc[predict_idx].index
             return ShadowResult(pd.Series(np.nan, index=idx), float("nan"))
@@ -59,15 +89,19 @@ class DynamicShadowPriceModel:
         self.model.fit(tr.drop(columns="_y"), tr["_y"])
 
         val_r2 = float("nan")
-        if val_idx is not None and len(val_idx):
-            v = feats.loc[val_idx].join(y.rename("_y")).dropna()
+        if val_idx is not None and len(safe_val_idx):
+            v = feats.loc[safe_val_idx].join(y).dropna()
             if len(v) > 5:
                 val_r2 = r2_score(v["_y"], self.model.predict(v.drop(columns="_y")))
 
         pred_feats = feats.loc[predict_idx].dropna()
         shadow = pd.Series(np.nan, index=prices.loc[predict_idx].index, name="shadow_price")
         if len(pred_feats):
-            shadow.loc[pred_feats.index] = self.model.predict(pred_feats)
+            pred_y = self.model.predict(pred_feats)
+            if self.cfg.price_transform == "log_indexed" and np.isfinite(base_target_price):
+                shadow.loc[pred_feats.index] = base_target_price * np.exp(pred_y)
+            else:
+                shadow.loc[pred_feats.index] = pred_y
         return ShadowResult(shadow, val_r2)
 
 
@@ -89,7 +123,11 @@ class DynamicReturnModel:
         # forward return label: known only `h` days later -> training label only
         fwd_ret = prices[target].shift(-h) / prices[target] - 1.0
 
-        tr = feats.loc[train_idx].join(fwd_ret.rename("_y")).dropna()
+        train_dates = pd.Index(train_idx)
+        safe_train_idx = train_dates[:-h] if len(train_dates) > h else train_dates[:0]
+        safe_val_idx = pd.Index(val_idx)[:-h] if val_idx is not None and len(val_idx) > h else pd.Index([])
+
+        tr = feats.loc[safe_train_idx].join(fwd_ret.rename("_y")).dropna()
         if len(tr) < 30:
             idx = prices.loc[predict_idx].index
             return ReturnResult(pd.Series(np.nan, index=idx), float("nan"))
@@ -97,8 +135,8 @@ class DynamicReturnModel:
         self.model.fit(tr.drop(columns="_y"), tr["_y"])
 
         val_r2 = float("nan")
-        if val_idx is not None and len(val_idx):
-            v = feats.loc[val_idx].join(fwd_ret.rename("_y")).dropna()
+        if val_idx is not None and len(safe_val_idx):
+            v = feats.loc[safe_val_idx].join(fwd_ret.rename("_y")).dropna()
             if len(v) > 5:
                 val_r2 = r2_score(v["_y"], self.model.predict(v.drop(columns="_y")))
 
