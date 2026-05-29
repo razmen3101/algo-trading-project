@@ -92,6 +92,17 @@ class StrategyConfig:
     size_by_confidence:   bool = True
     flat_probability_block: float = 0.40
 
+    # ---- Position Manager (version 1, rule-based) ----
+    use_position_manager: bool = False
+    pm_entry_confidence: float = 0.65
+    pm_entry_residual_z: float = 1.25
+    pm_exit_residual_z: float = 0.25
+    pm_opposite_confidence: float = 0.70
+    pm_stop_loss: float = -0.02
+    pm_take_profit: float = 0.03
+    pm_max_holding_days: int = 10
+    pm_allow_flip: bool = True
+
     # ---- Infra ----
     cache_dir:        str = ".cache"
     force_recompute:  bool = True

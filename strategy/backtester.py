@@ -29,6 +29,44 @@ class Backtester:
     def __init__(self, cfg):
         self.cfg = cfg
 
+    def run_with_positions(self, panel: pd.DataFrame) -> BacktestResult:
+        """Evaluate a panel that already contains the desired position series.
+
+        This is useful for rule-based PositionManager experiments while keeping
+        the baseline classifier-only path unchanged.
+        """
+        df = panel.copy()
+        if "position" not in df:
+            raise ValueError("run_with_positions() requires a 'position' column")
+
+        if "confidence" not in df and {"P_short", "P_flat", "P_long"}.issubset(df.columns):
+            df["confidence"] = np.where(
+                df["position"] == 1, df["P_long"],
+                np.where(df["position"] == -1, df["P_short"], df["P_flat"])
+            )
+
+        df = df.sort_values(["target", "date"]).reset_index(drop=True)
+        cost = self.cfg.transaction_cost_bps / 1e4
+
+        df["prev_pos"] = df.groupby("target")["position"].shift(1).fillna(0.0)
+        df["turnover"] = (df["position"] - df["prev_pos"]).abs()
+        df["gross_pnl"] = df["position"] * df["next_ret"]
+        df["net_pnl"] = df["gross_pnl"] - df["turnover"] * cost
+
+        port = df.groupby("date").agg(
+            ret=("net_pnl", "mean"),
+            gross=("gross_pnl", "mean"),
+            n_active=("position", lambda s: int((s != 0).sum())),
+        )
+        port["equity"] = (1 + port["ret"]).cumprod()
+        port["bh"] = (1 + df.groupby("date")["next_ret"].mean()).cumprod()
+
+        metrics = self._metrics(port, df)
+        sector_perf = self._group_perf(df, "sector")
+        target_perf = self._group_perf(df, "target")
+        confusion, report = self._classification(df)
+        return BacktestResult(port, df, metrics, sector_perf, target_perf, confusion, report)
+
     # ---- position construction (applies all trade filters) ------------- #
     def _positions(self, panel: pd.DataFrame) -> pd.DataFrame:
         df = panel.copy()
@@ -57,8 +95,12 @@ class Backtester:
         df["position"] = np.where(keep, raw * size, 0.0)
         return df
 
-    def run(self, panel: pd.DataFrame) -> BacktestResult:
-        df = self._positions(panel).sort_values(["target", "date"]).reset_index(drop=True)
+    def run(self, panel: pd.DataFrame, position_manager=None) -> BacktestResult:
+        if position_manager is None:
+            df = self._positions(panel)
+        else:
+            df = position_manager.manage(panel)
+        df = df.sort_values(["target", "date"]).reset_index(drop=True)
         cost = self.cfg.transaction_cost_bps / 1e4
 
         # per-target position change cost (first appearance pays full entry)
