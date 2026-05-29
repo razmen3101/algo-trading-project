@@ -7,4 +7,6 @@ __pycache__/
 *.h5
 *.pkl
 data/cache/
+.cache/
+reports/
 .DS_Store

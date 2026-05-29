@@ -1,0 +1,375 @@
+"""StrategyPipeline — end-to-end orchestration.
+
+Flow:
+  1. download + clean (existing Loader), universe = sector members + ETFs
+  2. chronological 3/1/1 split; expanding-window walk-forward folds
+  3. per sector x fold (history-only): target select -> predictor select ->
+     shadow-price regressor -> return regressor  (all out-of-sample)
+  4. residual/anomaly + technical + sector features over the OOS region
+  5. one global XGBoost classifier (train+tune on pre-test, predict locked test)
+  6. backtest on the locked test set, metrics, logs, plots
+
+Look-ahead guards live in each component; this module only ever passes
+history-up-to-t slices into selectors/regressors and keeps the test region
+untouched until the final backtest.
+"""
+from __future__ import annotations
+
+from dataclasses import dataclass
+import numpy as np
+import pandas as pd
+
+from config import SECTORS
+from data.loader import Loader
+from strategy.strategy_config import StrategyConfig
+from strategy.cache import CacheManager
+from strategy.splits import chrono_split, walk_forward_folds
+from strategy.target_selector import SectorTargetSelector
+from strategy.predictor_selector import PredictorSelector
+from strategy.regressors import DynamicShadowPriceModel, DynamicReturnModel
+from strategy.residual_features import ResidualFeatureBuilder
+from strategy.technical_features import TechnicalRuleFeatureBuilder
+from strategy.classifier import GlobalSignalClassifier
+from strategy.backtester import Backtester
+
+
+def hr(title: str) -> None:
+    print(f"\n{'='*78}\n  {title}\n{'='*78}")
+
+
+class StrategyPipeline:
+    def __init__(self, cfg: StrategyConfig | None = None):
+        self.cfg = cfg or StrategyConfig()
+        self.cache = CacheManager(self.cfg)
+        self.log_rows: list[dict] = []
+
+    # ================================================================== #
+    # 1. data
+    # ================================================================== #
+    def load_data(self):
+        def _build():
+            members = [t for c in SECTORS.values() for t in [c["target"]] + c["predictors"]]
+            universe = sorted(set(members) | set(SECTORS.keys()))  # + sector ETFs
+            session = self._maybe_insecure_session()
+            ld = Loader(tickers=universe, start=self.cfg.start,
+                        end=self.cfg.end, interval=self.cfg.interval, session=session)
+            return ld.load()
+        return self.cache.cached("market_data", _build, "data", verbose=True)
+
+    def _maybe_insecure_session(self):
+        """Build a TLS-verification-skipping session iff cfg.insecure_ssl.
+
+        Only needed on networks with a TLS-intercepting proxy whose root CA is
+        absent from certifi's bundle. Returns None otherwise (normal verified
+        download)."""
+        if not self.cfg.insecure_ssl:
+            return None
+        try:
+            from curl_cffi import requests as creq
+            print("[fetch] WARNING: insecure_ssl=True — skipping TLS verification")
+            return creq.Session(verify=False)
+        except Exception as e:
+            print(f"[fetch] insecure session unavailable ({e}); using default")
+            return None
+
+    # ================================================================== #
+    # 2-3. walk-forward OOS shadow price / return per sector
+    # ================================================================== #
+    def _sector_oos(self, etf, cfg_sector, md, folds, split):
+        """Return per-date OOS frame for one sector with dynamic target/predictors."""
+        members = [cfg_sector["target"]] + cfg_sector["predictors"]
+        prices, returns, volumes = md.prices, md.returns, md.volumes
+        etf_ret = returns[etf] if etf in returns else None
+
+        tsel = SectorTargetSelector(self.cfg)
+        psel = PredictorSelector(self.cfg)
+        shadow_m = DynamicShadowPriceModel(self.cfg)
+        return_m = DynamicReturnModel(self.cfg)
+
+        records = []
+        for fold in folds:
+            tr_idx, pr_idx = fold.train_idx, fold.predict_idx
+            # validation slice = the val region inside the train window (for scoring)
+            val_idx = tr_idx[(tr_idx >= split.train_end) & (tr_idx < split.val_end)]
+
+            # ---- dynamic target (history only) ----
+            # returns drops the first calendar date (pct_change), so reindex
+            # the returns-based slices onto tr_idx (missing rows -> NaN, dropped).
+            tc = tsel.select(etf, cfg_sector["name"], members,
+                             prices.loc[tr_idx], returns.reindex(tr_idx),
+                             volumes.loc[tr_idx],
+                             None if etf_ret is None else etf_ret.reindex(tr_idx))
+            target = tc.target
+            cands = [m for m in members if m != target]
+
+            # ---- dynamic predictors (history only, LASSO/ElasticNet) ----
+            pc = psel.select(target, cands, returns.reindex(tr_idx))
+            preds = pc.selected
+
+            # ---- regressors (fit history, predict OOS block) ----
+            sh = shadow_m.fit_predict(prices, target, preds, tr_idx, pr_idx, val_idx)
+            rr = return_m.fit_predict(prices, target, preds, tr_idx, pr_idx, val_idx)
+
+            self.log_rows.append(dict(
+                sector=cfg_sector["name"], etf=etf, retrain_date=fold.retrain_date.date(),
+                target=target, predictors=",".join(preds),
+                shadow_val_r2=round(sh.val_r2, 4), return_val_r2=round(rr.val_r2, 4),
+                top_coef=",".join(f"{k}:{v:.3f}" for k, v in pc.coefficients.head(3).items()),
+            ))
+
+            for d in pr_idx:
+                records.append(dict(date=d, etf=etf, sector=cfg_sector["name"],
+                                    target=target,
+                                    target_price=prices.at[d, target],
+                                    shadow_price=sh.shadow_price.get(d, np.nan),
+                                    predicted_return=rr.predicted_return.get(d, np.nan),
+                                    predictors=tuple(preds)))
+        return pd.DataFrame(records)
+
+    # ================================================================== #
+    # 4. feature assembly (residual + technical + sector)
+    # ================================================================== #
+    def _technical_all(self, md):
+        def _build():
+            tb = TechnicalRuleFeatureBuilder(self.cfg)
+            return {t: tb.build(t, md.prices, md.highs, md.lows, md.volumes)
+                    for t in md.prices.columns}
+        return self.cache.cached("technical_all", _build, "tech", verbose=True)
+
+    def _sector_features(self, md, oos: pd.DataFrame, etf: str) -> pd.DataFrame:
+        """Continuous sector features (EWM-z normalized) for a sector OOS frame."""
+        from strategy.residual_features import ewm_z
+        prices, returns = md.prices, md.returns
+        etf_ret = returns[etf] if etf in returns else pd.Series(0.0, index=returns.index)
+        etf_px = prices[etf] if etf in prices else pd.Series(np.nan, index=prices.index)
+        span = self.cfg.ewm_span
+
+        rows = []
+        for _, r in oos.iterrows():
+            d, t, preds = r["date"], r["target"], r["predictors"]
+            tr = returns[t]
+            # rolling (shifted) relationships
+            corr_etf = tr.rolling(60).corr(etf_ret).shift(1).get(d, np.nan)
+            basket = returns[list(preds)].mean(axis=1) if preds else pd.Series(np.nan, index=returns.index)
+            corr_pred = tr.rolling(60).corr(basket).shift(1).get(d, np.nan)
+            vol_t = tr.rolling(20).std().shift(1)
+            vol_e = etf_ret.rolling(20).std().shift(1)
+            vol_rel = (vol_t / vol_e).get(d, np.nan)
+            rows.append(dict(date=d,
+                             sect_etf_ret=etf_ret.get(d, np.nan),
+                             sect_target_minus_etf=tr.get(d, np.nan) - etf_ret.get(d, np.nan),
+                             sect_px_rel_etf=(prices[t] / etf_px).get(d, np.nan),
+                             sect_vol_rel_etf=vol_rel,
+                             sect_corr_etf=corr_etf,
+                             sect_corr_pred=corr_pred))
+        sf = pd.DataFrame(rows).set_index("date")
+        # EWM-z normalize the non-bounded continuous ones
+        for c in ["sect_px_rel_etf", "sect_vol_rel_etf"]:
+            _, _, z = ewm_z(sf[c], span)
+            sf[c] = z
+        return sf
+
+    def build_panel(self, md, folds, split) -> pd.DataFrame:
+        def _build():
+            tech = self._technical_all(md)
+            rfb = ResidualFeatureBuilder(self.cfg)
+            sector_keys = list(SECTORS.keys())
+            panels = []
+            for etf, cfg_sector in SECTORS.items():
+                hr(f"OOS modelling — {cfg_sector['name']} ({etf})")
+                oos = self._sector_oos(etf, cfg_sector, md, folds, split)
+                if oos.empty:
+                    continue
+                oos = oos.sort_values("date").reset_index(drop=True)
+
+                # residual / anomaly features on the per-sector active-target series
+                price = oos.set_index("date")["target_price"]
+                shadow = oos.set_index("date")["shadow_price"]
+                pret = oos.set_index("date")["predicted_return"]
+                # forward return label per active target ticker
+                fwd = self._forward_return(md, oos, self.cfg.label_horizon)
+                resid = rfb.build(price, shadow, pret.reindex(price.index), fwd)
+                resid_cols = ResidualFeatureBuilder.feature_columns(resid)
+
+                # technical features per row (active target on that date)
+                tech_rows = pd.DataFrame(
+                    [tech[t].loc[d] if d in tech[t].index else pd.Series(dtype=float)
+                     for d, t in zip(oos["date"], oos["target"])]
+                ).set_index(oos["date"].values)
+
+                # sector features
+                sect = self._sector_features(md, oos, etf)
+
+                df = oos.set_index("date").copy()
+                # df already carries shadow_price (kept for plots); take the rest
+                # of the residual features from the builder, incl. predicted_return.
+                df = df.drop(columns=["predicted_return"])
+                resid_join = [c for c in resid_cols if c != "shadow_price"]
+                df = df.join(resid[resid_join]).join(tech_rows).join(sect)
+                df["next_ret"] = self._next_return(md, oos).values
+                df["ann_vol"] = self._trailing_vol(md, oos).values
+                df["label"] = make_labels_from_fwd(fwd, self.cfg)
+                df["residual_z"] = resid["residual_ewm_z"]
+                # spread signal: overpriced (resid_z>0) -> short, underpriced -> long
+                df["spread_signal"] = -np.sign(df["residual_z"].fillna(0)).astype(int)
+                # sector one-hot
+                for k in sector_keys:
+                    df[f"oh_{k}"] = int(etf == k)
+                df["date"] = df.index
+                panels.append(df.reset_index(drop=True))
+            panel = pd.concat(panels, ignore_index=True)
+            return panel
+        return self.cache.cached("feature_panel", _build, "panel", verbose=True)
+
+    # ---- per-ticker return lookups (active target varies by row) -------- #
+    @staticmethod
+    def _forward_return(md, oos, h):
+        out = []
+        for d, t in zip(oos["date"], oos["target"]):
+            s = md.prices[t]
+            fut = s.shift(-h)
+            out.append(fut.get(d, np.nan) / s.get(d, np.nan) - 1.0)
+        return pd.Series(out, index=oos["date"].values)
+
+    @staticmethod
+    def _next_return(md, oos):
+        out = []
+        for d, t in zip(oos["date"], oos["target"]):
+            s = md.prices[t]
+            out.append(s.shift(-1).get(d, np.nan) / s.get(d, np.nan) - 1.0)
+        return pd.Series(out, index=oos["date"].values)
+
+    @staticmethod
+    def _trailing_vol(md, oos):
+        """Annualized 20d realized vol of the active target, shifted(1)
+        (observable at t) — feeds the backtest's high-volatility filter."""
+        out = []
+        for d, t in zip(oos["date"], oos["target"]):
+            v = md.returns[t].rolling(20).std().shift(1) * np.sqrt(252)
+            out.append(v.get(d, np.nan))
+        return pd.Series(out, index=oos["date"].values)
+
+    # ================================================================== #
+    # 5. global classifier
+    # ================================================================== #
+    def train_classifier(self, panel, split):
+        # exclude identifiers, raw price levels, labels, and backtest-only helpers
+        # (ann_vol/residual_z drive trade filters; residual_ewm_z is the modelled
+        # feature, so residual_z would just duplicate it).
+        feature_cols = [c for c in panel.columns if c not in (
+            "date", "etf", "sector", "target", "predictors", "target_price",
+            "shadow_price", "next_ret", "label", "spread_signal",
+            "ann_vol", "residual_z")]
+        # keep only numeric features, drop rows without label
+        data = panel.dropna(subset=["label"]).copy()
+        X = data[feature_cols].apply(pd.to_numeric, errors="coerce")
+        # leakage-free fill: forward then zero (no future info used)
+        X = X.groupby(data["target"]).ffill().fillna(0.0)
+        data = data.assign(**{c: X[c] for c in feature_cols})
+
+        is_test = data["date"] >= split.val_end
+        dev, test = data[~is_test], data[is_test]      # dev = pre-test (yr4), test locked
+        # chronological train/val split of dev for tuning
+        cut = dev["date"].quantile(0.8)
+        tr, val = dev[dev["date"] <= cut], dev[dev["date"] > cut]
+
+        clf = GlobalSignalClassifier(self.cfg)
+
+        def _fit():
+            clf.fit(tr[feature_cols], tr["label"], val[feature_cols], val["label"])
+            return dict(params=clf.result_.params, val_metrics=clf.result_.val_metrics,
+                        importance=clf.result_.feature_importance, features=feature_cols)
+        res = self.cache.cached("classifier", _fit, "clf", verbose=True)
+
+        # rebuild a live model from cached params (model object itself also cacheable,
+        # but params + a quick refit keeps the cache small and portable)
+        if clf.model_ is None:
+            clf.features_ = res["features"]
+            clf.fit(tr[feature_cols], tr["label"], val[feature_cols], val["label"])
+
+        return clf, test, feature_cols, res
+
+    # ================================================================== #
+    # 6. backtest
+    # ================================================================== #
+    def backtest(self, clf, test, feature_cols):
+        proba = clf.predict_proba(test)
+        signal = clf.predict(test)
+        panel = pd.DataFrame({
+            "date": test["date"].values,
+            "sector": test["sector"].values,
+            "target": test["target"].values,
+            "signal": signal.values,
+            "residual_z": test["residual_z"].values,
+            "spread_signal": test["spread_signal"].values,
+            "next_ret": test["next_ret"].values,
+            "ann_vol": test["ann_vol"].values,
+            "true_label": test["label"].values,
+        })
+        panel = pd.concat([panel.reset_index(drop=True), proba.reset_index(drop=True)], axis=1)
+        panel = panel.dropna(subset=["next_ret"])
+        bt = Backtester(self.cfg)
+        return bt.run(panel)
+
+    # ================================================================== #
+    # orchestrate
+    # ================================================================== #
+    def run(self):
+        hr("LOAD DATA")
+        md = self.load_data()
+        split = chrono_split(md.prices.index, self.cfg)
+        folds = walk_forward_folds(md.prices.index, self.cfg)
+        print(f"[split] {split.describe()}")
+        print(f"[walk-forward] {len(folds)} folds, retrain every {self.cfg.retrain_every}d")
+
+        panel = self.build_panel(md, folds, split)
+
+        hr("RETRAIN LOG (per sector x fold)")
+        log = pd.DataFrame(self.log_rows)
+        if not log.empty:
+            self.cache.save(log, "retrain_log", "log")
+            print(log.to_string(index=False, max_rows=60))
+
+        hr("GLOBAL CLASSIFIER")
+        clf, test, feature_cols, res = self.train_classifier(panel, split)
+        print(f"[clf] best params: {res['params']}")
+        print(f"[clf] validation metrics: {res['val_metrics']}")
+
+        hr("BACKTEST (locked test set)")
+        bt = self.backtest(clf, test, feature_cols)
+        self._print_results(bt, res)
+
+        if self.cfg.make_plots:
+            try:
+                from strategy.plots import make_all_plots
+                paths = make_all_plots(self.cfg, md, panel, bt, res, split)
+                print(f"\n[plots] saved {len(paths)} figures to {self.cfg.plots_dir}/")
+            except Exception as e:   # plotting is best-effort
+                print(f"[plots] skipped: {e}")
+
+        self.cache.save(bt.metrics, "backtest_metrics", "bt")
+        return dict(market_data=md, panel=panel, classifier=clf, backtest=bt,
+                    clf_result=res, split=split)
+
+    def _print_results(self, bt, res):
+        m = bt.metrics
+        print("  Performance:")
+        for k in ["cumulative_return", "annualized_return", "annualized_vol", "sharpe",
+                  "max_drawdown", "win_rate", "n_trades", "avg_trade_return",
+                  "n_long", "n_short", "n_flat", "buy_hold_cum"]:
+            print(f"    {k:>20}: {m[k]:.4f}" if isinstance(m[k], float) else f"    {k:>20}: {m[k]}")
+        print("\n  Sector performance:\n", bt.sector_perf.round(4).to_string())
+        print("\n  Target performance:\n", bt.target_perf.round(4).to_string())
+        print("\n  Confusion matrix:\n", bt.confusion.to_string())
+        print("\n  Classification report:\n", bt.report)
+        print("\n  Top feature importances:\n", res["importance"].head(15).round(4).to_string())
+
+
+def make_labels_from_fwd(fwd: pd.Series, cfg) -> pd.Series:
+    """Threshold labels directly from a precomputed forward-return series."""
+    pos, neg = cfg.positive_threshold, cfg.negative_threshold
+    lab = pd.Series(0.0, index=fwd.index)
+    lab[fwd > pos] = 1
+    lab[fwd < neg] = -1
+    lab[fwd.isna()] = np.nan
+    return lab

@@ -37,11 +37,14 @@ class MarketData:
 
 
 class Loader:
-    def __init__(self, tickers=ALL_TICKERS, start=DEFAULT_START, end=DEFAULT_END, interval=DEFAULT_INTERVAL):
+    def __init__(self, tickers=ALL_TICKERS, start=DEFAULT_START, end=DEFAULT_END,
+                 interval=DEFAULT_INTERVAL, session=None, retries=3):
         self.tickers  = tickers
         self.start    = start
         self.end      = end
         self.interval = interval
+        self.session  = session   # optional curl_cffi/requests session (e.g. for proxies)
+        self.retries  = retries
 
     def load(self) -> MarketData:
         raw                                   = self._fetch()
@@ -51,12 +54,26 @@ class Loader:
         return MarketData(prices=prices, returns=returns, highs=highs, lows=lows, volumes=volumes, summary=summary)
 
     def _fetch(self) -> pd.DataFrame:
+        import time
         print(f"[fetch] {len(self.tickers)} tickers | {self.start} -> {self.end or 'today'} | {self.interval}")
-        raw = yf.download(self.tickers, start=self.start, end=self.end, interval=self.interval,
-                          group_by='ticker', auto_adjust=True, progress=False, threads=True)
-        if raw.empty:
-            raise ValueError("yfinance returned empty DataFrame")
-        return raw
+        kwargs = dict(start=self.start, end=self.end, interval=self.interval,
+                      group_by='ticker', auto_adjust=True, progress=False, threads=True)
+        if self.session is not None:
+            kwargs['session'] = self.session
+        last_exc = None
+        for attempt in range(1, self.retries + 1):
+            try:
+                raw = yf.download(self.tickers, **kwargs)
+                if not raw.empty:
+                    return raw
+                last_exc = ValueError("yfinance returned empty DataFrame")
+            except Exception as e:          # network / rate-limit / SSL
+                last_exc = e
+            if attempt < self.retries:
+                wait = 5 * attempt          # simple linear backoff for 429s
+                print(f"[fetch] attempt {attempt} failed ({last_exc}); retrying in {wait}s")
+                time.sleep(wait)
+        raise ValueError(f"yfinance fetch failed after {self.retries} attempts: {last_exc}")
 
     def _clean_ticker(self, raw: pd.DataFrame, ticker: str) -> pd.DataFrame | None:
         try:
@@ -92,7 +109,8 @@ class Loader:
     def _summary(self, prices: pd.DataFrame, returns: pd.DataFrame) -> pd.DataFrame:
         last  = prices.index[-1]
         roles = {cfg['target']: ('target', cfg['name']) for cfg in SECTORS.values()} | \
-                {t: ('predictor', cfg['name']) for cfg in SECTORS.values() for t in cfg['predictors']}
+                {t: ('predictor', cfg['name']) for cfg in SECTORS.values() for t in cfg['predictors']} | \
+                {etf: ('etf', cfg['name']) for etf, cfg in SECTORS.items()}
 
         def ret(since):
             sub = prices[prices.index >= since]
@@ -101,8 +119,9 @@ class Loader:
 
         df = pd.DataFrame(index=prices.columns)
         df.index.name     = 'Ticker'
-        df['Sector']      = df.index.map(lambda t: roles[t][1])
-        df['Role']        = df.index.map(lambda t: roles[t][0])
+        # any ticker outside the sector config (defensive) falls back to ('?', '?')
+        df['Sector']      = df.index.map(lambda t: roles.get(t, ('other', 'Other'))[1])
+        df['Role']        = df.index.map(lambda t: roles.get(t, ('other', 'Other'))[0])
         df['Last Price']  = prices.loc[last].round(2)
         df['YTD %']       = ret(pd.Timestamp(f'{last.year}-01-01')).round(2)
         df['1Y %']        = ret(last - pd.DateOffset(years=1)).round(2)
