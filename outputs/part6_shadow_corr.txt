@@ -1,0 +1,2 @@
+corr(resid_sharpe, avg_shadow_r2)=0.16206969655866424
+corr(resid_sharpe, avg_return_r2)=0.03791425736078953

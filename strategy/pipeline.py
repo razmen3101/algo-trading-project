@@ -24,7 +24,7 @@ from data.loader import Loader
 from strategy.strategy_config import StrategyConfig
 from strategy.cache import CacheManager
 from strategy.splits import chrono_split, walk_forward_folds
-from strategy.target_selector import SectorTargetSelector
+from strategy.target_selection import TargetSelectionEngine
 from strategy.predictor_selector import PredictorSelector
 from strategy.regressors import DynamicShadowPriceModel, DynamicReturnModel
 from strategy.residual_features import ResidualFeatureBuilder
@@ -43,6 +43,7 @@ class StrategyPipeline:
         self.cfg = cfg or StrategyConfig()
         self.cache = CacheManager(self.cfg)
         self.log_rows: list[dict] = []
+        self.selection_rows: list[dict] = []
 
     # ================================================================== #
     # 1. data
@@ -82,7 +83,7 @@ class StrategyPipeline:
         prices, returns, volumes = md.prices, md.returns, md.volumes
         etf_ret = returns[etf] if etf in returns else None
 
-        tsel = SectorTargetSelector(self.cfg)
+        tsel = TargetSelectionEngine(self.cfg, mode=self.cfg.target_selection_mode)
         psel = PredictorSelector(self.cfg)
         shadow_m = DynamicShadowPriceModel(self.cfg)
         return_m = DynamicReturnModel(self.cfg)
@@ -99,15 +100,15 @@ class StrategyPipeline:
             # returns drops the first calendar date (pct_change), so reindex
             # the returns-based slices onto tr_idx (missing rows -> NaN, dropped).
             tc = tsel.select(etf, cfg_sector["name"], members,
-                             prices.loc[tr_idx], returns.reindex(tr_idx),
-                             volumes.loc[tr_idx],
-                             None if etf_ret is None else etf_ret.reindex(tr_idx))
+                             prices, returns, volumes,
+                             None if etf_ret is None else etf_ret,
+                             train_idx=tr_idx, predict_idx=pr_idx, split=split)
             target = tc.target
             cands = [m for m in members if m != target]
 
             # ---- dynamic predictors (history only, LASSO/ElasticNet) ----
+            preds = tc.selected_predictors or psel.select(target, cands, returns.reindex(tr_idx), prices.loc[tr_idx]).selected
             pc = psel.select(target, cands, returns.reindex(tr_idx), prices.loc[tr_idx])
-            preds = pc.selected
 
             # ---- regressors (fit history, predict OOS block) ----
             sh = shadow_m.fit_predict(prices, target, preds, tr_idx, pr_idx, val_idx)
@@ -141,7 +142,10 @@ class StrategyPipeline:
 
             self.log_rows.append(dict(
                 sector=cfg_sector["name"], etf=etf, retrain_date=fold.retrain_date.date(),
+                selector_mode=tc.mode,
                 selected_target=target, selected_predictors=",".join(preds),
+                selection_score=tc.selected_score,
+                meta_prediction=tc.meta_prediction,
                 shadow_val_r2=round(sh.val_r2, 4), return_val_r2=round(rr.val_r2, 4),
                 shadow_oos_r2=round(shadow_oos_r2, 4) if np.isfinite(shadow_oos_r2) else np.nan,
                 return_oos_r2=round(return_oos_r2, 4) if np.isfinite(return_oos_r2) else np.nan,
@@ -153,6 +157,15 @@ class StrategyPipeline:
 
             prev_target = target
             prev_predictors = cur_predictors
+
+            if isinstance(tc.scores, pd.DataFrame) and not tc.scores.empty:
+                sel = tc.scores.copy()
+                sel["sector"] = cfg_sector["name"]
+                sel["etf"] = etf
+                sel["retrain_date"] = fold.retrain_date.date()
+                sel["selector_mode"] = tc.mode
+                sel["selected_target"] = target
+                self.selection_rows.extend(sel.to_dict("records"))
 
             for d in pr_idx:
                 records.append(dict(date=d, etf=etf, sector=cfg_sector["name"],
@@ -267,12 +280,14 @@ class StrategyPipeline:
                 df["target"] = df.index.get_level_values(1)
                 panels.append(df.reset_index(drop=True))
             panel = pd.concat(panels, ignore_index=True)
-            return {"panel": panel, "retrain_log": pd.DataFrame(self.log_rows)}
+            return {"panel": panel, "retrain_log": pd.DataFrame(self.log_rows), "selection_log": pd.DataFrame(self.selection_rows)}
         obj = self.cache.cached("feature_panel", _build, "panel", verbose=True)
         if isinstance(obj, dict):
             self.log_rows = obj.get("retrain_log", pd.DataFrame()).to_dict("records")
+            self.selection_rows = obj.get("selection_log", pd.DataFrame()).to_dict("records")
             return obj["panel"]
         self.log_rows = []
+        self.selection_rows = []
         return obj
 
     # ---- per-ticker return lookups (active target varies by row) -------- #

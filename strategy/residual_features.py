@@ -66,6 +66,18 @@ def consecutive_days_above(series: pd.Series, threshold: float) -> pd.Series:
     return pd.Series(out, index=series.index, dtype=float)
 
 
+def consecutive_positive(series: pd.Series) -> pd.Series:
+    mask = series > 0
+    groups = (~mask).cumsum()
+    return mask.groupby(groups).cumsum().astype(float)
+
+
+def consecutive_negative(series: pd.Series) -> pd.Series:
+    mask = series < 0
+    groups = (~mask).cumsum()
+    return mask.groupby(groups).cumsum().astype(float)
+
+
 def distance_from_peak(abs_series: pd.Series, reset_threshold: float = 1.0) -> pd.Series:
     out = []
     peak = np.nan
@@ -236,8 +248,8 @@ class ResidualFeatureBuilder:
             out = out.join(family)
 
         if getattr(self.cfg, "enable_return_feature_expansion", False):
-            pred_days_pos = consecutive_days_above(predicted_return, 0.0)
-            pred_days_neg = consecutive_days_above(-predicted_return, 0.0)
+            pred_days_pos = consecutive_positive(predicted_return.shift(1))
+            pred_days_neg = consecutive_negative(predicted_return.shift(1))
             pred_abs = predicted_return.abs()
             pred_peak = distance_from_peak(pred_abs, reset_threshold=0.0)
             pred_regime = pd.cut(

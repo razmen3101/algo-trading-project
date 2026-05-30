@@ -27,6 +27,7 @@ def parse_args(argv=None) -> StrategyConfig:
     p.add_argument("--no-plots", action="store_true", help="skip plotting")
     p.add_argument("--random-search", action="store_true", help="tune classifier on val")
     p.add_argument("--selection", choices=["elasticnet", "lasso"], default=None)
+    p.add_argument("--target-selection-mode", choices=["legacy", "tradability_score", "meta_target"], default=None)
     p.add_argument("--top-n", type=int, default=None, help="top N predictors")
     p.add_argument("--start", default=None, help="data start date (YYYY-MM-DD)")
     p.add_argument("--insecure-ssl", action="store_true",
@@ -38,6 +39,7 @@ def parse_args(argv=None) -> StrategyConfig:
     if args.no_plots:       overrides["make_plots"] = False
     if args.random_search:  overrides["use_random_search"] = True
     if args.selection:      overrides["feature_selection_method"] = args.selection
+    if args.target_selection_mode: overrides["target_selection_mode"] = args.target_selection_mode
     if args.top_n:          overrides["top_n_predictors"] = args.top_n
     if args.start:          overrides["start"] = args.start
     if args.insecure_ssl:   overrides["insecure_ssl"] = True
@@ -47,7 +49,7 @@ def parse_args(argv=None) -> StrategyConfig:
 def main(argv=None):
     cfg = parse_args(argv)
     print(f"[config] hash={cfg.config_hash()}  selection={cfg.feature_selection_method}  "
-          f"top_n={cfg.top_n_predictors}  random_search={cfg.use_random_search}  "
+            f"top_n={cfg.top_n_predictors}  target_mode={cfg.target_selection_mode}  random_search={cfg.use_random_search}  "
           f"force_recompute={cfg.force_recompute}")
     StrategyPipeline(cfg).run()
 

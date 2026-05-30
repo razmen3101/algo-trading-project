@@ -30,8 +30,10 @@ class StrategyConfig:
     min_train_days:   int = 252 * 3  # initial expanding-window length
 
     # ---- Target selection ----
+    target_selection_mode: str = "tradability_score"  # "legacy" | "tradability_score" | "meta_target"
     # weights for the composite target-suitability score (historical only)
     target_min_history:   int = 252 * 2
+    target_selection_meta_min_rows: int = 100
     target_score_weights: dict = field(default_factory=lambda: {
         "liquidity":      0.20,   # log dollar volume
         "etf_corr":       0.20,   # |corr| of returns with sector ETF
@@ -122,6 +124,27 @@ class StrategyConfig:
     # ------------------------------------------------------------------ #
     def to_dict(self) -> dict:
         return asdict(self)
+
+    @classmethod
+    def research_residual_engine_preset(cls) -> "StrategyConfig":
+        """Return the explicit research preset used for residual-engine studies.
+
+        Legacy/default mode keeps the original configuration:
+        - enable_multi_residual_engine=False
+        - enable_return_feature_expansion=False
+        - predictor_selection_method="elasticnet"
+
+        Research upgraded mode enables the expanded residual engine and return
+        feature expansion while keeping the classifier architecture unchanged:
+        - enable_multi_residual_engine=True
+        - enable_return_feature_expansion=True
+        - predictor_selection_method="elasticnet_bic_hybrid"
+        """
+        return cls(
+            enable_multi_residual_engine=True,
+            enable_return_feature_expansion=True,
+            predictor_selection_method="elasticnet_bic_hybrid",
+        )
 
     def config_hash(self, *extra: str) -> str:
         """Stable short hash over settings that affect computed results.

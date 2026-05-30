@@ -19,44 +19,112 @@ from strategy.position_manager import PositionManager, summarize_completed_trade
 from strategy.backtester import Backtester
 
 
-DATE_CUTOFF = pd.Timestamp("2024-04-01")
+RAW_PREFIX = "raw_"
+PERCENT_PREFIX = "percent_"
+LOG_PREFIX = "log_"
+RETURN_EXACT_FEATURES = {
+    "predicted_return",
+    "predicted_return_z",
+    "predicted_return_rank",
+    "predicted_return_direction",
+    "predicted_return_percentile",
+    "predicted_return_ewm_z",
+    "predicted_return_velocity",
+    "predicted_return_acceleration",
+    "predicted_return_distance_from_extreme",
+    "predicted_return_days_positive",
+    "predicted_return_days_negative",
+}
+LEGACY_RESIDUAL_EXACT = {
+    "price_residual",
+    "price_residual_z",
+    "residual_ewm_z",
+    "residual_rank",
+    "residual_percentile",
+    "residual_abs_z",
+    "residual_sign",
+    "residual_distance_from_zero",
+    "residual_distance_from_peak",
+    "shadow_price_gap_pct",
+    "residual_excursion_bucket",
+    "residual_half_life_proxy",
+    "residual_ewm_mean",
+    "residual_ewm_std",
+    "residual_roll_mean",
+    "residual_roll_std",
+    "residual_ewm_slope",
+    "shadow_price",
+}
+
+
+def is_return_feature(col):
+    return col in RETURN_EXACT_FEATURES or col.startswith("predicted_return_regime_")
+
+
+def is_legacy_residual_feature(col):
+    if col.startswith((RAW_PREFIX, PERCENT_PREFIX, LOG_PREFIX)):
+        return False
+    return col in LEGACY_RESIDUAL_EXACT or col.startswith("residual_") or col.startswith("price_residual")
 
 
 def select_features(feature_cols, families, include_return):
-    # keep base features (those not in family prefixes) and only include
-    # family-prefixed columns according to `families` set
-    family_prefixes = {
-        "raw": "raw_",
-        "percent": "percent_",
-        "log": "log_",
-    }
     out = []
     for c in feature_cols:
-        if c.startswith(tuple(family_prefixes.values())):
-            # family-specific column
-            keep = any(c.startswith(family_prefixes[f]) for f in families)
+        if c == "predicted_return_regime":
+            continue
+        if c.startswith((RAW_PREFIX, PERCENT_PREFIX, LOG_PREFIX)):
+            keep = any(
+                (fam == "raw" and c.startswith(RAW_PREFIX))
+                or (fam == "percent" and c.startswith(PERCENT_PREFIX))
+                or (fam == "log" and c.startswith(LOG_PREFIX))
+                for fam in families
+            )
             if keep:
                 out.append(c)
             continue
-        if c.startswith("predicted_return") or c.startswith("predicted_return_"):
+        if is_return_feature(c):
             if include_return:
                 out.append(c)
             continue
-        # otherwise keep (technical, sector, shared residuals)
+        if is_legacy_residual_feature(c):
+            continue
+        # otherwise keep (technical, sector, non-residual controls)
         out.append(c)
     return out
 
 
-def run_experiment(cfg, panel, feature_cols, families, include_return):
+def feature_sanity(selected_cols, include_return):
+    raw_features = [c for c in selected_cols if c.startswith(RAW_PREFIX)]
+    percent_features = [c for c in selected_cols if c.startswith(PERCENT_PREFIX)]
+    log_features = [c for c in selected_cols if c.startswith(LOG_PREFIX)]
+    return_features = [c for c in selected_cols if is_return_feature(c)]
+    legacy_residual_features = [c for c in selected_cols if is_legacy_residual_feature(c)]
+    return {
+        "n_raw_features": len(raw_features),
+        "n_percent_features": len(percent_features),
+        "n_log_features": len(log_features),
+        "n_legacy_residual_features_used": len(legacy_residual_features),
+        "n_return_features": len(return_features),
+        "raw_features_used": raw_features,
+        "percent_features_used": percent_features,
+        "log_features_used": log_features,
+        "legacy_residual_features_used": legacy_residual_features,
+        "return_features_used": return_features,
+        "with_return_expected": bool(include_return),
+    }
+
+
+def run_experiment(cfg, panel, feature_cols, families, include_return, train_end):
     data = panel.dropna(subset=["label"]).copy()
     # numeric features and leakage-free fill
     X = data[feature_cols].apply(pd.to_numeric, errors="coerce")
     X = X.groupby(data["target"]).ffill().fillna(0.0)
     data = data.assign(**{c: X[c] for c in feature_cols})
-    # filter to training period (train-only per request)
-    data = data[data["date"] < DATE_CUTOFF].copy()
+    # filter to training period (strictly before the chronological validation boundary)
+    data = data[data["date"] < train_end].copy()
 
     feats = select_features(feature_cols, families, include_return)
+    sanity = feature_sanity(feats, include_return)
     X_tr = data[feats]
     y_tr = data["label"]
 
@@ -82,7 +150,6 @@ def run_experiment(cfg, panel, feature_cols, families, include_return):
 
     # build panel for backtest (train period only)
     test = data.copy()
-    test = test[test["date"] < DATE_CUTOFF]
     test = test.assign(signal=pred_series.reindex(test.index).values,
                        P_short=proba["P_short"].reindex(test.index).values,
                        P_flat=proba["P_flat"].reindex(test.index).values,
@@ -136,7 +203,13 @@ def run_experiment(cfg, panel, feature_cols, families, include_return):
             continue
         hits = sim[sim[col] == 1]
         trades = summarize_completed_trades(sim)
-        trades_hit = trades[trades["target"].isin(hits["target"])]
+        trade_fib = trades.merge(
+            test[["date", "target", col]],
+            left_on=["entry_date", "target"],
+            right_on=["date", "target"],
+            how="left",
+        )
+        trades_hit = trade_fib[trade_fib[col] == 1]
         fib_stats[lvl] = {
             "hit_count": int(hits.shape[0]),
             "trade_count": int(trades_hit.shape[0]),
@@ -171,11 +244,12 @@ def run_experiment(cfg, panel, feature_cols, families, include_return):
         "include_return": include_return,
         "feature_count": len(feats),
         "feature_breakdown": {
-            "raw": sum(1 for c in feats if c.startswith("raw_")),
-            "percent": sum(1 for c in feats if c.startswith("percent_")),
-            "log": sum(1 for c in feats if c.startswith("log_")),
-            "return": sum(1 for c in feats if c.startswith("predicted_return")),
+            "raw": sanity["n_raw_features"],
+            "percent": sanity["n_percent_features"],
+            "log": sanity["n_log_features"],
+            "return": sanity["n_return_features"],
         },
+        "sanity": sanity,
         "classification": {
             "accuracy": acc,
             "f1_macro": f1_macro,
@@ -196,22 +270,37 @@ def run_experiment(cfg, panel, feature_cols, families, include_return):
 
 def main():
     import dataclasses
-    import dataclasses
-    cfg = dataclasses.replace(StrategyConfig(), end="2024-03-31", enable_multi_residual_engine=True)
+    base_cfg = StrategyConfig()
+    cfg_no_return = dataclasses.replace(
+        base_cfg,
+        end="2024-03-31",
+        enable_multi_residual_engine=True,
+        enable_return_feature_expansion=False,
+    )
+    cfg_with_return = dataclasses.replace(
+        base_cfg,
+        end="2024-03-31",
+        enable_multi_residual_engine=True,
+        enable_return_feature_expansion=True,
+    )
 
-    sp = StrategyPipeline(cfg)
-    md = sp.load_data()
     from strategy.splits import chrono_split, walk_forward_folds
-    split = chrono_split(md.prices.index, cfg)
-    folds = walk_forward_folds(md.prices.index, cfg)
-    panel = sp.build_panel(md, folds, split)
+
+    sp_no_return = StrategyPipeline(cfg_no_return)
+    md = sp_no_return.load_data()
+    split = chrono_split(md.prices.index, cfg_no_return)
+    folds = walk_forward_folds(md.prices.index, cfg_no_return)
+    panel_no_return = sp_no_return.build_panel(md, folds, split)
+
+    sp_with_return = StrategyPipeline(cfg_with_return)
+    panel_with_return = sp_with_return.build_panel(md, folds, split)
 
     # base feature columns from pipeline logic
     excluded = {"date", "etf", "sector", "target", "predictors", "target_price",
                 "shadow_price", "next_ret", "label", "spread_signal",
-                "ann_vol", "residual_z", "price_residual", "residual_ewm_mean",
-                "residual_ewm_std", "residual_roll_mean", "residual_roll_std"}
-    feature_cols = [c for c in panel.columns if c not in excluded]
+                "ann_vol", "residual_z"}
+    feature_cols_no_return = [c for c in panel_no_return.columns if c not in excluded]
+    feature_cols_with_return = [c for c in panel_with_return.columns if c not in excluded]
 
     experiments = [
         ("A_RAW", {"raw"}),
@@ -225,15 +314,12 @@ def main():
 
     results = {}
     for name, fams in experiments:
-        # prioritize residual + return features variant
-        res = run_experiment(cfg, panel, feature_cols, fams, include_return=True)
+        res = run_experiment(cfg_with_return, panel_with_return, feature_cols_with_return, fams, include_return=True, train_end=split.train_end)
         results[f"{name}_with_return"] = res
-        # try without return features if quick (best-effort)
-        try:
-            res2 = run_experiment(cfg, panel, feature_cols, fams, include_return=False)
-            results[f"{name}_no_return"] = res2
-        except Exception:
-            results[f"{name}_no_return"] = None
+        print(name + "_with_return", res["sanity"])
+        res2 = run_experiment(cfg_no_return, panel_no_return, feature_cols_no_return, fams, include_return=False, train_end=split.train_end)
+        results[f"{name}_no_return"] = res2
+        print(name + "_no_return", res2["sanity"])
 
     # save raw JSON results
     import os
@@ -260,6 +346,19 @@ def main():
         lines.append(md_row('Percent residual features', fb.get('percent', 0)))
         lines.append(md_row('Log residual features', fb.get('log', 0)))
         lines.append(md_row('Return features', fb.get('return', 0)))
+        sanity = res.get('sanity', {})
+        if sanity:
+            lines.append("\n### Feature sanity")
+            lines.append(md_row('n_raw_features', sanity.get('n_raw_features', 0)))
+            lines.append(md_row('n_percent_features', sanity.get('n_percent_features', 0)))
+            lines.append(md_row('n_log_features', sanity.get('n_log_features', 0)))
+            lines.append(md_row('n_legacy_residual_features_used', sanity.get('n_legacy_residual_features_used', 0)))
+            lines.append(md_row('n_return_features', sanity.get('n_return_features', 0)))
+            lines.append(md_row('raw_features_used', sanity.get('raw_features_used', [])))
+            lines.append(md_row('percent_features_used', sanity.get('percent_features_used', [])))
+            lines.append(md_row('log_features_used', sanity.get('log_features_used', [])))
+            lines.append(md_row('legacy_residual_features_used', sanity.get('legacy_residual_features_used', [])))
+            lines.append(md_row('return_features_used', sanity.get('return_features_used', [])))
         lines.append("\n### Classification diagnostics")
         c = res['classification']
         lines.append(md_row('Accuracy', round(c['accuracy'], 4)))

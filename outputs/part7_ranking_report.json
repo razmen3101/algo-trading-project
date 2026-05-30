@@ -1,0 +1,152 @@
+[
+  {
+    "sector": "Communication",
+    "top5": [
+      {
+        "target": "META",
+        "resid_sharpe": -1.8386705979548077
+      }
+    ],
+    "bottom5": [
+      {
+        "target": "META",
+        "resid_sharpe": -1.8386705979548077
+      }
+    ]
+  },
+  {
+    "sector": "Consumer Disc.",
+    "top5": [
+      {
+        "target": "AMZN",
+        "resid_sharpe": -3.541574817259234
+      }
+    ],
+    "bottom5": [
+      {
+        "target": "AMZN",
+        "resid_sharpe": -3.541574817259234
+      }
+    ]
+  },
+  {
+    "sector": "Consumer Staples",
+    "top5": [
+      {
+        "target": "PG",
+        "resid_sharpe": -3.1297436266154404
+      }
+    ],
+    "bottom5": [
+      {
+        "target": "PG",
+        "resid_sharpe": -3.1297436266154404
+      }
+    ]
+  },
+  {
+    "sector": "Energy",
+    "top5": [
+      {
+        "target": "XOM",
+        "resid_sharpe": 1.87628997735981
+      }
+    ],
+    "bottom5": [
+      {
+        "target": "XOM",
+        "resid_sharpe": 1.87628997735981
+      }
+    ]
+  },
+  {
+    "sector": "Financials",
+    "top5": [
+      {
+        "target": "JPM",
+        "resid_sharpe": 2.082743595144222
+      }
+    ],
+    "bottom5": [
+      {
+        "target": "JPM",
+        "resid_sharpe": 2.082743595144222
+      }
+    ]
+  },
+  {
+    "sector": "Health Care",
+    "top5": [
+      {
+        "target": "UNH",
+        "resid_sharpe": -1.7237477485850434
+      }
+    ],
+    "bottom5": [
+      {
+        "target": "UNH",
+        "resid_sharpe": -1.7237477485850434
+      }
+    ]
+  },
+  {
+    "sector": "Materials",
+    "top5": [
+      {
+        "target": "FCX",
+        "resid_sharpe": 0.6246036541710208
+      }
+    ],
+    "bottom5": [
+      {
+        "target": "FCX",
+        "resid_sharpe": 0.6246036541710208
+      }
+    ]
+  },
+  {
+    "sector": "Real Estate",
+    "top5": [
+      {
+        "target": "PLD",
+        "resid_sharpe": -0.0443737008009414
+      }
+    ],
+    "bottom5": [
+      {
+        "target": "PLD",
+        "resid_sharpe": -0.0443737008009414
+      }
+    ]
+  },
+  {
+    "sector": "Technology",
+    "top5": [
+      {
+        "target": "NVDA",
+        "resid_sharpe": 0.809356422967124
+      }
+    ],
+    "bottom5": [
+      {
+        "target": "NVDA",
+        "resid_sharpe": 0.809356422967124
+      }
+    ]
+  },
+  {
+    "sector": "Utilities",
+    "top5": [
+      {
+        "target": "NEE",
+        "resid_sharpe": 1.9752677449512064
+      }
+    ],
+    "bottom5": [
+      {
+        "target": "NEE",
+        "resid_sharpe": 1.9752677449512064
+      }
+    ]
+  }
+]
