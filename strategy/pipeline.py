@@ -31,6 +31,7 @@ from strategy.residual_features import ResidualFeatureBuilder
 from strategy.technical_features import TechnicalRuleFeatureBuilder
 from strategy.classifier import GlobalSignalClassifier
 from strategy.backtester import Backtester
+from sklearn.metrics import r2_score
 
 
 def hr(title: str) -> None:
@@ -87,6 +88,8 @@ class StrategyPipeline:
         return_m = DynamicReturnModel(self.cfg)
 
         records = []
+        prev_target = None
+        prev_predictors: set[str] | None = None
         for fold in folds:
             tr_idx, pr_idx = fold.train_idx, fold.predict_idx
             # validation slice = the val region inside the train window (for scoring)
@@ -110,12 +113,46 @@ class StrategyPipeline:
             sh = shadow_m.fit_predict(prices, target, preds, tr_idx, pr_idx, val_idx)
             rr = return_m.fit_predict(prices, target, preds, tr_idx, pr_idx, val_idx)
 
+            pr_dates = pd.Index(pr_idx)
+            sh_eval = pd.DataFrame({
+                "actual": prices[target].reindex(pr_dates),
+                "pred": sh.shadow_price.reindex(pr_dates),
+            }).dropna()
+            shadow_oos_r2 = float(r2_score(sh_eval["actual"], sh_eval["pred"])) if len(sh_eval) > 5 else float("nan")
+
+            h = self.cfg.return_horizon
+            fwd = prices[target].shift(-h) / prices[target] - 1.0
+            rr_eval = pd.DataFrame({
+                "actual": fwd.reindex(pr_dates),
+                "pred": rr.predicted_return.reindex(pr_dates),
+            }).dropna()
+            return_oos_r2 = float(r2_score(rr_eval["actual"], rr_eval["pred"])) if len(rr_eval) > 5 else float("nan")
+
+            cur_predictors = set(preds)
+            predictor_jaccard = float("nan")
+            predictor_turnover = float("nan")
+            target_turnover = 0
+            if prev_predictors is not None:
+                union = prev_predictors | cur_predictors
+                predictor_jaccard = len(prev_predictors & cur_predictors) / len(union) if union else float("nan")
+                predictor_turnover = 1.0 - predictor_jaccard if np.isfinite(predictor_jaccard) else float("nan")
+            if prev_target is not None:
+                target_turnover = int(target != prev_target)
+
             self.log_rows.append(dict(
                 sector=cfg_sector["name"], etf=etf, retrain_date=fold.retrain_date.date(),
                 selected_target=target, selected_predictors=",".join(preds),
                 shadow_val_r2=round(sh.val_r2, 4), return_val_r2=round(rr.val_r2, 4),
+                shadow_oos_r2=round(shadow_oos_r2, 4) if np.isfinite(shadow_oos_r2) else np.nan,
+                return_oos_r2=round(return_oos_r2, 4) if np.isfinite(return_oos_r2) else np.nan,
+                target_turnover=target_turnover,
+                predictor_jaccard=round(predictor_jaccard, 4) if np.isfinite(predictor_jaccard) else np.nan,
+                predictor_turnover=round(predictor_turnover, 4) if np.isfinite(predictor_turnover) else np.nan,
                 top_coefficients=",".join(f"{k}:{v:.3f}" for k, v in pc.coefficients.head(3).items()),
             ))
+
+            prev_target = target
+            prev_predictors = cur_predictors
 
             for d in pr_idx:
                 records.append(dict(date=d, etf=etf, sector=cfg_sector["name"],
@@ -304,9 +341,13 @@ class StrategyPipeline:
 
         def _fit():
             clf.fit(tr[feature_cols], tr["label"], val[feature_cols], val["label"])
+            feature_group_map = {c: self._feature_group(c) for c in feature_cols}
+            feature_group_counts = pd.Series(feature_group_map).value_counts().to_dict()
             return dict(params=clf.result_.params, val_metrics=clf.result_.val_metrics,
                         importance=clf.result_.feature_importance, features=feature_cols,
-                        split_diagnostics=split_diagnostics)
+                        split_diagnostics=split_diagnostics,
+                        feature_group_map=feature_group_map,
+                        feature_group_counts=feature_group_counts)
         res = self.cache.cached("classifier", _fit, "clf", verbose=True)
 
         # rebuild a live model from cached params (model object itself also cacheable,
@@ -316,6 +357,18 @@ class StrategyPipeline:
             clf.fit(tr[feature_cols], tr["label"], val[feature_cols], val["label"])
 
         return clf, test, feature_cols, res
+
+    @staticmethod
+    def _feature_group(col: str) -> str:
+        if col.startswith("oh_") or col.startswith("sect_"):
+            return "Sector"
+        if col.startswith("predicted_return"):
+            return "Return"
+        if col.startswith(("residual_", "raw_", "percent_", "log_")) or col in {
+            "price_residual", "price_residual_z", "shadow_price_gap_pct",
+        }:
+            return "Residual"
+        return "Technical"
 
     # ================================================================== #
     # 6. backtest

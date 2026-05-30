@@ -43,6 +43,7 @@ class StrategyConfig:
     target_vol_band: tuple = (0.20, 0.45)  # preferred annualized vol range
 
     # ---- Predictor selection (LASSO / ElasticNet for FEATURE SELECTION only) ----
+    predictor_selection_method: str = "elasticnet"  # "elasticnet" | "lasso" | "elasticnet_bic_hybrid"
     feature_selection_method: str = "elasticnet"   # "elasticnet" | "lasso"
     top_n_predictors:         int = 5
     elasticnet_l1_ratio:      float = 0.5
@@ -57,6 +58,9 @@ class StrategyConfig:
     ))
 
     # ---- Residual / anomaly features ----
+    residual_type:   str = "raw"   # "raw" | "percent" | "log"
+    enable_multi_residual_engine: bool = False
+    enable_return_feature_expansion: bool = False
     ewm_span:        int = 50
     resid_roll_win:  int = 50
 
