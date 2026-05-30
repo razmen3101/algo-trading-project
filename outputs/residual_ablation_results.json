@@ -1,0 +1,3886 @@
+{
+  "A_RAW_with_return": {
+    "families": [
+      "raw"
+    ],
+    "include_return": true,
+    "feature_count": 96,
+    "feature_breakdown": {
+      "raw": 28,
+      "percent": 0,
+      "log": 0,
+      "return": 1
+    },
+    "classification": {
+      "accuracy": 0.9736842105263158,
+      "f1_macro": 0.9719022462779346,
+      "f1_weighted": 0.9734412285186823,
+      "confusion_matrix": [
+        [
+          82,
+          3,
+          0
+        ],
+        [
+          0,
+          346,
+          0
+        ],
+        [
+          0,
+          12,
+          127
+        ]
+      ],
+      "class_report": {
+        "0": {
+          "precision": 1.0,
+          "recall": 0.9647058823529412,
+          "f1-score": 0.9820359281437125,
+          "support": 85.0
+        },
+        "1": {
+          "precision": 0.9584487534626038,
+          "recall": 1.0,
+          "f1-score": 0.9787835926449788,
+          "support": 346.0
+        },
+        "2": {
+          "precision": 1.0,
+          "recall": 0.9136690647482014,
+          "f1-score": 0.9548872180451128,
+          "support": 139.0
+        },
+        "accuracy": 0.9736842105263158,
+        "macro avg": {
+          "precision": 0.9861495844875346,
+          "recall": 0.959458315700381,
+          "f1-score": 0.9719022462779346,
+          "support": 570.0
+        },
+        "weighted avg": {
+          "precision": 0.974777664382563,
+          "recall": 0.9736842105263158,
+          "f1-score": 0.9734412285186823,
+          "support": 570.0
+        }
+      }
+    },
+    "backtest_metrics": {
+      "cumulative_return": 0.07335864939995851,
+      "annualized_return": 0.3674915314345861,
+      "annualized_vol": 0.03155284424708155,
+      "sharpe": 11.646859109019209,
+      "max_drawdown": -0.003131494726147932,
+      "win_rate": 0.8571428571428571,
+      "n_trades": 39,
+      "avg_trade_return": 0.014672836207638993,
+      "n_long": 127,
+      "n_short": 82,
+      "n_flat": 361,
+      "buy_hold_cum": 0.11206860349797054
+    },
+    "sector_perf": {
+      "net_pnl": {
+        "Technology": 0.22625612509813553,
+        "Materials": 0.21843360426440117,
+        "Health Care": 0.08793598425724947,
+        "Communication": 0.05075127322821471,
+        "Utilities": 0.04357627267307995,
+        "Energy": 0.04273476241437435,
+        "Real Estate": 0.039780952238855416,
+        "Consumer Disc.": 0.0,
+        "Financials": 0.0,
+        "Consumer Staples": 0.0
+      },
+      "trades": {
+        "Technology": 10,
+        "Materials": 10,
+        "Health Care": 6,
+        "Communication": 4,
+        "Utilities": 4,
+        "Energy": 4,
+        "Real Estate": 1,
+        "Consumer Disc.": 0,
+        "Financials": 0,
+        "Consumer Staples": 0
+      },
+      "win_rate": {
+        "Technology": 0.9,
+        "Materials": 0.8571428571428571,
+        "Health Care": 0.75,
+        "Communication": 0.8,
+        "Utilities": 0.8,
+        "Energy": 1.0,
+        "Real Estate": 1.0,
+        "Consumer Disc.": 0.0,
+        "Financials": 0.0,
+        "Consumer Staples": 0.0
+      },
+      "avg_ret": {
+        "Technology": 0.022875612509813553,
+        "Materials": 0.01578097173317151,
+        "Health Care": 0.011179498032156183,
+        "Communication": 0.010350254645642942,
+        "Utilities": 0.008915254534615991,
+        "Energy": 0.00874695248287487,
+        "Real Estate": 0.019890476119427708,
+        "Consumer Disc.": 0.0,
+        "Financials": 0.0,
+        "Consumer Staples": 0.0
+      }
+    },
+    "target_perf": {
+      "net_pnl": {
+        "AMD": 0.22625612509813553,
+        "FCX": 0.21843360426440117,
+        "UNH": 0.08793598425724947,
+        "GOOGL": 0.05075127322821471,
+        "AEP": 0.04357627267307995,
+        "XOM": 0.04273476241437435,
+        "PLD": 0.039780952238855416,
+        "AMZN": 0.0,
+        "PG": 0.0,
+        "JPM": 0.0,
+        "HD": 0.0,
+        "TSM": 0.0
+      },
+      "trades": {
+        "AMD": 10,
+        "FCX": 10,
+        "UNH": 6,
+        "GOOGL": 4,
+        "AEP": 4,
+        "XOM": 4,
+        "PLD": 1,
+        "AMZN": 0,
+        "PG": 0,
+        "JPM": 0,
+        "HD": 0,
+        "TSM": 0
+      },
+      "win_rate": {
+        "AMD": 0.9,
+        "FCX": 0.8571428571428571,
+        "UNH": 0.75,
+        "GOOGL": 0.8,
+        "AEP": 0.8,
+        "XOM": 1.0,
+        "PLD": 1.0,
+        "AMZN": 0.0,
+        "PG": 0.0,
+        "JPM": 0.0,
+        "HD": 0.0,
+        "TSM": 0.0
+      },
+      "avg_ret": {
+        "AMD": 0.022875612509813553,
+        "FCX": 0.01578097173317151,
+        "UNH": 0.011179498032156183,
+        "GOOGL": 0.010350254645642942,
+        "AEP": 0.008915254534615991,
+        "XOM": 0.00874695248287487,
+        "PLD": 0.019890476119427708,
+        "AMZN": 0.0,
+        "PG": 0.0,
+        "JPM": 0.0,
+        "HD": 0.0,
+        "TSM": 0.0
+      }
+    },
+    "top30_features": {
+      "raw_residual_rank": 0.03897886350750923,
+      "oh_XLK": 0.03011062555015087,
+      "oh_XLV": 0.024211637675762177,
+      "oh_XLP": 0.021119842305779457,
+      "oh_XLE": 0.018834147602319717,
+      "rule_sma20_gt_50": 0.018406299874186516,
+      "oh_XLB": 0.01639934442937374,
+      "rule_macd_above_sig": 0.016300128772854805,
+      "residual_distance_from_zero": 0.016246704384684563,
+      "raw_residual_distance_from_zero": 0.015427562408149242,
+      "px_ema200_ratio_z": 0.01498787198215723,
+      "oh_XLF": 0.014985211193561554,
+      "rsi_z": 0.01490782480686903,
+      "raw_residual_ewm_mean": 0.014859149232506752,
+      "shadow_price_gap_pct": 0.01479252427816391,
+      "px_ema50_ratio_z": 0.014606393873691559,
+      "px_sma50_ratio_z": 0.014381236396729946,
+      "raw_residual_ewm_std": 0.014314094558358192,
+      "raw_residual": 0.013931608758866787,
+      "rule_px_gt_sma200": 0.013928367756307125,
+      "px_sma200_ratio_z": 0.013837196864187717,
+      "residual_abs_z": 0.013591126538813114,
+      "rule_near_52w_high": 0.013566982932388783,
+      "raw_residual_abs_z": 0.013446434400975704,
+      "residual_ewm_z": 0.013405924662947655,
+      "sect_vol_rel_etf": 0.013338280841708183,
+      "sect_target_minus_etf": 0.013259000144898891,
+      "sect_corr_etf": 0.013151860795915127,
+      "px_sma20_ratio_z": 0.012961397878825665,
+      "residual_rank": 0.012843573465943336
+    },
+    "family_importance": {
+      "raw": 0.24335862696170807,
+      "percent": 0.0,
+      "log": 0.0,
+      "Return": 0.012314850464463234,
+      "Other": 0.7443264296744019
+    },
+    "fibonacci": {
+      "fib_23_hit": {
+        "hit_count": 96,
+        "trade_count": 20,
+        "avg_trade_return": 0.03594844870871553,
+        "win_rate": 1.0
+      },
+      "fib_38_hit": {
+        "hit_count": 67,
+        "trade_count": 20,
+        "avg_trade_return": 0.03594844870871553,
+        "win_rate": 1.0
+      },
+      "fib_50_hit": {
+        "hit_count": 45,
+        "trade_count": 20,
+        "avg_trade_return": 0.03594844870871553,
+        "win_rate": 1.0
+      },
+      "fib_61_hit": {
+        "hit_count": 19,
+        "trade_count": 11,
+        "avg_trade_return": 0.03281781023455183,
+        "win_rate": 1.0
+      },
+      "fib_78_hit": {
+        "hit_count": 4,
+        "trade_count": 2,
+        "avg_trade_return": 0.025875636614107356,
+        "win_rate": 1.0
+      }
+    },
+    "residual_diagnostics": {
+      "raw": {
+        "mean_z": 0.295010540345924,
+        "std_z": 1.8158992553941475,
+        "pct_abs_gt_1_25": 0.3385964912280702,
+        "pct_abs_gt_1_5": 0.24561403508771928,
+        "pct_abs_gt_2": 0.12456140350877193,
+        "pct_abs_gt_3": 0.03508771929824561
+      }
+    }
+  },
+  "A_RAW_no_return": {
+    "families": [
+      "raw"
+    ],
+    "include_return": false,
+    "feature_count": 95,
+    "feature_breakdown": {
+      "raw": 28,
+      "percent": 0,
+      "log": 0,
+      "return": 0
+    },
+    "classification": {
+      "accuracy": 0.9701754385964912,
+      "f1_macro": 0.967623192560005,
+      "f1_weighted": 0.9698890306753043,
+      "confusion_matrix": [
+        [
+          81,
+          4,
+          0
+        ],
+        [
+          0,
+          346,
+          0
+        ],
+        [
+          0,
+          13,
+          126
+        ]
+      ],
+      "class_report": {
+        "0": {
+          "precision": 1.0,
+          "recall": 0.9529411764705882,
+          "f1-score": 0.9759036144578314,
+          "support": 85.0
+        },
+        "1": {
+          "precision": 0.953168044077135,
+          "recall": 1.0,
+          "f1-score": 0.9760225669957687,
+          "support": 346.0
+        },
+        "2": {
+          "precision": 1.0,
+          "recall": 0.9064748201438849,
+          "f1-score": 0.9509433962264151,
+          "support": 139.0
+        },
+        "accuracy": 0.9701754385964912,
+        "macro avg": {
+          "precision": 0.9843893480257117,
+          "recall": 0.9531386655381576,
+          "f1-score": 0.967623192560005,
+          "support": 570.0
+        },
+        "weighted avg": {
+          "precision": 0.9715721811415592,
+          "recall": 0.9701754385964912,
+          "f1-score": 0.9698890306753043,
+          "support": 570.0
+        }
+      }
+    },
+    "backtest_metrics": {
+      "cumulative_return": 0.07250951623270652,
+      "annualized_return": 0.3627152097672697,
+      "annualized_vol": 0.03092215146172026,
+      "sharpe": 11.72994738791992,
+      "max_drawdown": -0.003131494726147821,
+      "win_rate": 0.8723404255319149,
+      "n_trades": 37,
+      "avg_trade_return": 0.015117051376301135,
+      "n_long": 126,
+      "n_short": 81,
+      "n_flat": 363,
+      "buy_hold_cum": 0.11206860349797054
+    },
+    "sector_perf": {
+      "net_pnl": {
+        "Technology": 0.22625612509813553,
+        "Materials": 0.21843360426440117,
+        "Health Care": 0.07360675437263597,
+        "Communication": 0.04603344867220327,
+        "Utilities": 0.04357627267307995,
+        "Energy": 0.04273476241437435,
+        "Real Estate": 0.039780952238855416,
+        "Consumer Staples": 0.01107949495246785,
+        "Consumer Disc.": 0.0,
+        "Financials": 0.0
+      },
+      "trades": {
+        "Technology": 10,
+        "Materials": 10,
+        "Health Care": 4,
+        "Communication": 2,
+        "Utilities": 4,
+        "Energy": 4,
+        "Real Estate": 1,
+        "Consumer Staples": 2,
+        "Consumer Disc.": 0,
+        "Financials": 0
+      },
+      "win_rate": {
+        "Technology": 0.9,
+        "Materials": 0.8571428571428571,
+        "Health Care": 0.7142857142857143,
+        "Communication": 1.0,
+        "Utilities": 0.8,
+        "Energy": 1.0,
+        "Real Estate": 1.0,
+        "Consumer Staples": 1.0,
+        "Consumer Disc.": 0.0,
+        "Financials": 0.0
+      },
+      "avg_ret": {
+        "Technology": 0.022875612509813553,
+        "Materials": 0.01578097173317151,
+        "Health Care": 0.010658107767519425,
+        "Communication": 0.01551114955740109,
+        "Utilities": 0.008915254534615991,
+        "Energy": 0.00874695248287487,
+        "Real Estate": 0.019890476119427708,
+        "Consumer Staples": 0.01157949495246785,
+        "Consumer Disc.": 0.0,
+        "Financials": 0.0
+      }
+    },
+    "target_perf": {
+      "net_pnl": {
+        "AMD": 0.22625612509813553,
+        "FCX": 0.21843360426440117,
+        "UNH": 0.07360675437263597,
+        "GOOGL": 0.04603344867220327,
+        "AEP": 0.04357627267307995,
+        "XOM": 0.04273476241437435,
+        "PLD": 0.039780952238855416,
+        "PG": 0.01107949495246785,
+        "AMZN": 0.0,
+        "HD": 0.0,
+        "JPM": 0.0,
+        "TSM": 0.0
+      },
+      "trades": {
+        "AMD": 10,
+        "FCX": 10,
+        "UNH": 4,
+        "GOOGL": 2,
+        "AEP": 4,
+        "XOM": 4,
+        "PLD": 1,
+        "PG": 2,
+        "AMZN": 0,
+        "HD": 0,
+        "JPM": 0,
+        "TSM": 0
+      },
+      "win_rate": {
+        "AMD": 0.9,
+        "FCX": 0.8571428571428571,
+        "UNH": 0.7142857142857143,
+        "GOOGL": 1.0,
+        "AEP": 0.8,
+        "XOM": 1.0,
+        "PLD": 1.0,
+        "PG": 1.0,
+        "AMZN": 0.0,
+        "HD": 0.0,
+        "JPM": 0.0,
+        "TSM": 0.0
+      },
+      "avg_ret": {
+        "AMD": 0.022875612509813553,
+        "FCX": 0.01578097173317151,
+        "UNH": 0.010658107767519425,
+        "GOOGL": 0.01551114955740109,
+        "AEP": 0.008915254534615991,
+        "XOM": 0.00874695248287487,
+        "PLD": 0.019890476119427708,
+        "PG": 0.01157949495246785,
+        "AMZN": 0.0,
+        "HD": 0.0,
+        "JPM": 0.0,
+        "TSM": 0.0
+      }
+    },
+    "top30_features": {
+      "rule_obv_trend_pos": 0.03767580911517143,
+      "oh_XLK": 0.030604811385273933,
+      "oh_XLP": 0.022672001272439957,
+      "rule_sma20_gt_50": 0.019774874672293663,
+      "raw_residual_rank": 0.019161282107234,
+      "oh_XLC": 0.017137132585048676,
+      "raw_residual_ewm_mean": 0.017038710415363312,
+      "oh_XLB": 0.016799170523881912,
+      "raw_residual_z": 0.016682378947734833,
+      "residual_distance_from_zero": 0.016461456194519997,
+      "shadow_price_gap_pct": 0.015592335723340511,
+      "rsi_z": 0.015194813720881939,
+      "raw_residual_ewm_std": 0.014767843298614025,
+      "px_ema200_ratio_z": 0.014748659916222095,
+      "residual_half_life_proxy": 0.014707987196743488,
+      "residual_abs_z": 0.014666861854493618,
+      "px_ema50_ratio_z": 0.014479107223451138,
+      "px_sma50_ratio_z": 0.014425475150346756,
+      "px_ema20_ratio_z": 0.014412123709917068,
+      "sect_corr_etf": 0.014285875484347343,
+      "rule_px_gt_sma20": 0.014166219159960747,
+      "raw_residual_abs_z": 0.01406428124755621,
+      "rule_volume_spike": 0.0139961251989007,
+      "raw_residual": 0.013902653008699417,
+      "raw_residual_distance_from_zero": 0.013878695666790009,
+      "px_sma200_ratio_z": 0.013804540038108826,
+      "raw_residual_regime_elevated": 0.013704993762075901,
+      "sect_target_minus_etf": 0.013692203909158707,
+      "residual_percentile": 0.013643201440572739,
+      "macd_signal_z": 0.01360810361802578
+    },
+    "family_importance": {
+      "raw": 0.24873796571046114,
+      "percent": 0.0,
+      "log": 0.0,
+      "Return": 0.0,
+      "Other": 0.7512620501220226
+    },
+    "fibonacci": {
+      "fib_23_hit": {
+        "hit_count": 96,
+        "trade_count": 19,
+        "avg_trade_return": 0.03739481129927125,
+        "win_rate": 1.0
+      },
+      "fib_38_hit": {
+        "hit_count": 67,
+        "trade_count": 19,
+        "avg_trade_return": 0.03739481129927125,
+        "win_rate": 1.0
+      },
+      "fib_50_hit": {
+        "hit_count": 45,
+        "trade_count": 19,
+        "avg_trade_return": 0.03739481129927125,
+        "win_rate": 1.0
+      },
+      "fib_61_hit": {
+        "hit_count": 19,
+        "trade_count": 11,
+        "avg_trade_return": 0.033396143906956964,
+        "win_rate": 1.0
+      },
+      "fib_78_hit": {
+        "hit_count": 4,
+        "trade_count": 2,
+        "avg_trade_return": 0.02905647181233556,
+        "win_rate": 1.0
+      }
+    },
+    "residual_diagnostics": {
+      "raw": {
+        "mean_z": 0.295010540345924,
+        "std_z": 1.8158992553941475,
+        "pct_abs_gt_1_25": 0.3385964912280702,
+        "pct_abs_gt_1_5": 0.24561403508771928,
+        "pct_abs_gt_2": 0.12456140350877193,
+        "pct_abs_gt_3": 0.03508771929824561
+      }
+    }
+  },
+  "B_PERCENT_with_return": {
+    "families": [
+      "percent"
+    ],
+    "include_return": true,
+    "feature_count": 96,
+    "feature_breakdown": {
+      "raw": 0,
+      "percent": 28,
+      "log": 0,
+      "return": 1
+    },
+    "classification": {
+      "accuracy": 0.9736842105263158,
+      "f1_macro": 0.9726074089888774,
+      "f1_weighted": 0.9733830708223327,
+      "confusion_matrix": [
+        [
+          83,
+          2,
+          0
+        ],
+        [
+          0,
+          346,
+          0
+        ],
+        [
+          0,
+          13,
+          126
+        ]
+      ],
+      "class_report": {
+        "0": {
+          "precision": 1.0,
+          "recall": 0.9764705882352941,
+          "f1-score": 0.9880952380952381,
+          "support": 85.0
+        },
+        "1": {
+          "precision": 0.9584487534626038,
+          "recall": 1.0,
+          "f1-score": 0.9787835926449788,
+          "support": 346.0
+        },
+        "2": {
+          "precision": 1.0,
+          "recall": 0.9064748201438849,
+          "f1-score": 0.9509433962264151,
+          "support": 139.0
+        },
+        "accuracy": 0.9736842105263158,
+        "macro avg": {
+          "precision": 0.9861495844875346,
+          "recall": 0.9609818027930598,
+          "f1-score": 0.9726074089888774,
+          "support": 570.0
+        },
+        "weighted avg": {
+          "precision": 0.974777664382563,
+          "recall": 0.9736842105263158,
+          "f1-score": 0.9733830708223327,
+          "support": 570.0
+        }
+      }
+    },
+    "backtest_metrics": {
+      "cumulative_return": 0.07136729245162754,
+      "annualized_return": 0.3563106448534692,
+      "annualized_vol": 0.031195252356094022,
+      "sharpe": 11.421951032361614,
+      "max_drawdown": -0.003131494726147932,
+      "win_rate": 0.8431372549019608,
+      "n_trades": 39,
+      "avg_trade_return": 0.013732382081904646,
+      "n_long": 126,
+      "n_short": 83,
+      "n_flat": 361,
+      "buy_hold_cum": 0.11206860349797054
+    },
+    "sector_perf": {
+      "net_pnl": {
+        "Technology": 0.22625612509813553,
+        "Materials": 0.1998161162672275,
+        "Health Care": 0.08793598425724947,
+        "Communication": 0.05075127322821471,
+        "Utilities": 0.04357627267307995,
+        "Energy": 0.04273476241437435,
+        "Real Estate": 0.039780952238855416,
+        "Consumer Disc.": 0.0,
+        "Financials": 0.0,
+        "Consumer Staples": 0.0
+      },
+      "trades": {
+        "Technology": 10,
+        "Materials": 10,
+        "Health Care": 6,
+        "Communication": 4,
+        "Utilities": 4,
+        "Energy": 4,
+        "Real Estate": 1,
+        "Consumer Disc.": 0,
+        "Financials": 0,
+        "Consumer Staples": 0
+      },
+      "win_rate": {
+        "Technology": 0.9,
+        "Materials": 0.8125,
+        "Health Care": 0.75,
+        "Communication": 0.8,
+        "Utilities": 0.8,
+        "Energy": 1.0,
+        "Real Estate": 1.0,
+        "Consumer Disc.": 0.0,
+        "Financials": 0.0,
+        "Consumer Staples": 0.0
+      },
+      "avg_ret": {
+        "Technology": 0.022875612509813553,
+        "Materials": 0.01264475726670172,
+        "Health Care": 0.011179498032156183,
+        "Communication": 0.010350254645642942,
+        "Utilities": 0.008915254534615991,
+        "Energy": 0.00874695248287487,
+        "Real Estate": 0.019890476119427708,
+        "Consumer Disc.": 0.0,
+        "Financials": 0.0,
+        "Consumer Staples": 0.0
+      }
+    },
+    "target_perf": {
+      "net_pnl": {
+        "AMD": 0.22625612509813553,
+        "FCX": 0.1998161162672275,
+        "UNH": 0.08793598425724947,
+        "GOOGL": 0.05075127322821471,
+        "AEP": 0.04357627267307995,
+        "XOM": 0.04273476241437435,
+        "PLD": 0.039780952238855416,
+        "AMZN": 0.0,
+        "PG": 0.0,
+        "JPM": 0.0,
+        "HD": 0.0,
+        "TSM": 0.0
+      },
+      "trades": {
+        "AMD": 10,
+        "FCX": 10,
+        "UNH": 6,
+        "GOOGL": 4,
+        "AEP": 4,
+        "XOM": 4,
+        "PLD": 1,
+        "AMZN": 0,
+        "PG": 0,
+        "JPM": 0,
+        "HD": 0,
+        "TSM": 0
+      },
+      "win_rate": {
+        "AMD": 0.9,
+        "FCX": 0.8125,
+        "UNH": 0.75,
+        "GOOGL": 0.8,
+        "AEP": 0.8,
+        "XOM": 1.0,
+        "PLD": 1.0,
+        "AMZN": 0.0,
+        "PG": 0.0,
+        "JPM": 0.0,
+        "HD": 0.0,
+        "TSM": 0.0
+      },
+      "avg_ret": {
+        "AMD": 0.022875612509813553,
+        "FCX": 0.01264475726670172,
+        "UNH": 0.011179498032156183,
+        "GOOGL": 0.010350254645642942,
+        "AEP": 0.008915254534615991,
+        "XOM": 0.00874695248287487,
+        "PLD": 0.019890476119427708,
+        "AMZN": 0.0,
+        "PG": 0.0,
+        "JPM": 0.0,
+        "HD": 0.0,
+        "TSM": 0.0
+      }
+    },
+    "top30_features": {
+      "oh_XLV": 0.025497078895568848,
+      "oh_XLK": 0.024419691413640976,
+      "oh_XLP": 0.021825166419148445,
+      "rule_macd_above_sig": 0.020908914506435394,
+      "percent_residual_ewm_mean": 0.0205472931265831,
+      "oh_XLE": 0.019264673814177513,
+      "oh_XLB": 0.018985934555530548,
+      "px_ema50_ratio_z": 0.016740700230002403,
+      "residual_distance_from_zero": 0.016451267525553703,
+      "px_sma50_ratio_z": 0.016177993267774582,
+      "rule_px_gt_sma20": 0.015891004353761673,
+      "px_ema200_ratio_z": 0.015752708539366722,
+      "rule_near_52w_high": 0.0153811015188694,
+      "residual_abs_z": 0.015185991302132607,
+      "percent_residual_ewm_std": 0.015128802508115768,
+      "shadow_price_gap_pct": 0.015070602297782898,
+      "rsi_z": 0.014928490854799747,
+      "residual_half_life_proxy": 0.014780442230403423,
+      "percent_residual_distance_from_zero": 0.014469986781477928,
+      "oh_XLC": 0.014225334860384464,
+      "percent_residual_z": 0.01404582615941763,
+      "sect_target_minus_etf": 0.013844051398336887,
+      "sect_vol_rel_etf": 0.013614709489047527,
+      "predicted_return": 0.01350455079227686,
+      "residual_excursion_bucket": 0.013485049828886986,
+      "macd_signal_z": 0.013453611172735691,
+      "sect_corr_pred": 0.01329729426652193,
+      "rule_breakout_20": 0.013272573240101337,
+      "percent_residual_abs_z": 0.013156832195818424,
+      "sect_corr_etf": 0.013141435571014881
+    },
+    "family_importance": {
+      "raw": 0.0,
+      "percent": 0.23888355400413275,
+      "log": 0.0,
+      "Return": 0.01350455079227686,
+      "Other": 0.7476119001512416
+    },
+    "fibonacci": {
+      "fib_23_hit": {
+        "hit_count": 96,
+        "trade_count": 20,
+        "avg_trade_return": 0.035017574308856846,
+        "win_rate": 1.0
+      },
+      "fib_38_hit": {
+        "hit_count": 67,
+        "trade_count": 20,
+        "avg_trade_return": 0.035017574308856846,
+        "win_rate": 1.0
+      },
+      "fib_50_hit": {
+        "hit_count": 45,
+        "trade_count": 20,
+        "avg_trade_return": 0.035017574308856846,
+        "win_rate": 1.0
+      },
+      "fib_61_hit": {
+        "hit_count": 19,
+        "trade_count": 11,
+        "avg_trade_return": 0.031125311325717865,
+        "win_rate": 1.0
+      },
+      "fib_78_hit": {
+        "hit_count": 4,
+        "trade_count": 2,
+        "avg_trade_return": 0.025875636614107356,
+        "win_rate": 1.0
+      }
+    },
+    "residual_diagnostics": {
+      "percent": {
+        "mean_z": 0.28645490483514197,
+        "std_z": 1.800681386074996,
+        "pct_abs_gt_1_25": 0.32280701754385965,
+        "pct_abs_gt_1_5": 0.23684210526315788,
+        "pct_abs_gt_2": 0.1280701754385965,
+        "pct_abs_gt_3": 0.03859649122807018
+      }
+    }
+  },
+  "B_PERCENT_no_return": {
+    "families": [
+      "percent"
+    ],
+    "include_return": false,
+    "feature_count": 95,
+    "feature_breakdown": {
+      "raw": 0,
+      "percent": 28,
+      "log": 0,
+      "return": 0
+    },
+    "classification": {
+      "accuracy": 0.9736842105263158,
+      "f1_macro": 0.9726074089888774,
+      "f1_weighted": 0.9733830708223327,
+      "confusion_matrix": [
+        [
+          83,
+          2,
+          0
+        ],
+        [
+          0,
+          346,
+          0
+        ],
+        [
+          0,
+          13,
+          126
+        ]
+      ],
+      "class_report": {
+        "0": {
+          "precision": 1.0,
+          "recall": 0.9764705882352941,
+          "f1-score": 0.9880952380952381,
+          "support": 85.0
+        },
+        "1": {
+          "precision": 0.9584487534626038,
+          "recall": 1.0,
+          "f1-score": 0.9787835926449788,
+          "support": 346.0
+        },
+        "2": {
+          "precision": 1.0,
+          "recall": 0.9064748201438849,
+          "f1-score": 0.9509433962264151,
+          "support": 139.0
+        },
+        "accuracy": 0.9736842105263158,
+        "macro avg": {
+          "precision": 0.9861495844875346,
+          "recall": 0.9609818027930598,
+          "f1-score": 0.9726074089888774,
+          "support": 570.0
+        },
+        "weighted avg": {
+          "precision": 0.974777664382563,
+          "recall": 0.9736842105263158,
+          "f1-score": 0.9733830708223327,
+          "support": 570.0
+        }
+      }
+    },
+    "backtest_metrics": {
+      "cumulative_return": 0.06865039711203313,
+      "annualized_return": 0.3411703165845583,
+      "annualized_vol": 0.0312118862166811,
+      "sharpe": 10.930781761027337,
+      "max_drawdown": -0.003131494726147932,
+      "win_rate": 0.8723404255319149,
+      "n_trades": 37,
+      "avg_trade_return": 0.014349596289940989,
+      "n_long": 126,
+      "n_short": 83,
+      "n_flat": 361,
+      "buy_hold_cum": 0.11206860349797054
+    },
+    "sector_perf": {
+      "net_pnl": {
+        "Technology": 0.22625612509813553,
+        "Materials": 0.16803398532086067,
+        "Health Care": 0.08793598425724947,
+        "Communication": 0.04603344867220327,
+        "Utilities": 0.04357627267307995,
+        "Energy": 0.04273476241437435,
+        "Real Estate": 0.039780952238855416,
+        "Consumer Staples": 0.01107949495246785,
+        "Consumer Disc.": 0.0,
+        "Financials": 0.0
+      },
+      "trades": {
+        "Technology": 10,
+        "Materials": 8,
+        "Health Care": 6,
+        "Communication": 2,
+        "Utilities": 4,
+        "Energy": 4,
+        "Real Estate": 1,
+        "Consumer Staples": 2,
+        "Consumer Disc.": 0,
+        "Financials": 0
+      },
+      "win_rate": {
+        "Technology": 0.9,
+        "Materials": 0.8461538461538461,
+        "Health Care": 0.75,
+        "Communication": 1.0,
+        "Utilities": 0.8,
+        "Energy": 1.0,
+        "Real Estate": 1.0,
+        "Consumer Staples": 1.0,
+        "Consumer Disc.": 0.0,
+        "Financials": 0.0
+      },
+      "avg_ret": {
+        "Technology": 0.022875612509813553,
+        "Materials": 0.013079537332373898,
+        "Health Care": 0.011179498032156183,
+        "Communication": 0.01551114955740109,
+        "Utilities": 0.008915254534615991,
+        "Energy": 0.00874695248287487,
+        "Real Estate": 0.019890476119427708,
+        "Consumer Staples": 0.01157949495246785,
+        "Consumer Disc.": 0.0,
+        "Financials": 0.0
+      }
+    },
+    "target_perf": {
+      "net_pnl": {
+        "AMD": 0.22625612509813553,
+        "FCX": 0.16803398532086067,
+        "UNH": 0.08793598425724947,
+        "GOOGL": 0.04603344867220327,
+        "AEP": 0.04357627267307995,
+        "XOM": 0.04273476241437435,
+        "PLD": 0.039780952238855416,
+        "PG": 0.01107949495246785,
+        "AMZN": 0.0,
+        "HD": 0.0,
+        "JPM": 0.0,
+        "TSM": 0.0
+      },
+      "trades": {
+        "AMD": 10,
+        "FCX": 8,
+        "UNH": 6,
+        "GOOGL": 2,
+        "AEP": 4,
+        "XOM": 4,
+        "PLD": 1,
+        "PG": 2,
+        "AMZN": 0,
+        "HD": 0,
+        "JPM": 0,
+        "TSM": 0
+      },
+      "win_rate": {
+        "AMD": 0.9,
+        "FCX": 0.8461538461538461,
+        "UNH": 0.75,
+        "GOOGL": 1.0,
+        "AEP": 0.8,
+        "XOM": 1.0,
+        "PLD": 1.0,
+        "PG": 1.0,
+        "AMZN": 0.0,
+        "HD": 0.0,
+        "JPM": 0.0,
+        "TSM": 0.0
+      },
+      "avg_ret": {
+        "AMD": 0.022875612509813553,
+        "FCX": 0.013079537332373898,
+        "UNH": 0.011179498032156183,
+        "GOOGL": 0.01551114955740109,
+        "AEP": 0.008915254534615991,
+        "XOM": 0.00874695248287487,
+        "PLD": 0.019890476119427708,
+        "PG": 0.01157949495246785,
+        "AMZN": 0.0,
+        "HD": 0.0,
+        "JPM": 0.0,
+        "TSM": 0.0
+      }
+    },
+    "top30_features": {
+      "oh_XLK": 0.02570214495062828,
+      "percent_residual_rank": 0.024335984140634537,
+      "rule_obv_trend_pos": 0.02213106118142605,
+      "oh_XLP": 0.021673964336514473,
+      "percent_residual_ewm_mean": 0.020075159147381783,
+      "oh_XLB": 0.01825643703341484,
+      "px_ema200_ratio_z": 0.016893373802304268,
+      "residual_abs_z": 0.01651693508028984,
+      "residual_distance_from_zero": 0.01650383695960045,
+      "oh_XLU": 0.016470763832330704,
+      "shadow_price_gap_pct": 0.015896813943982124,
+      "percent_residual": 0.015896199271082878,
+      "rsi_z": 0.015712307766079903,
+      "oh_XLE": 0.0156385637819767,
+      "percent_residual_ewm_std": 0.015622798353433609,
+      "px_sma50_ratio_z": 0.015378936193883419,
+      "sect_corr_etf": 0.01474627573043108,
+      "px_ema50_ratio_z": 0.014496531337499619,
+      "percent_fib_retrace_pct": 0.014337200671434402,
+      "residual_excursion_bucket": 0.014262275770306587,
+      "rule_breakout_20": 0.014147351495921612,
+      "px_sma200_ratio_z": 0.014086668379604816,
+      "macd_signal_z": 0.01402595266699791,
+      "percent_residual_distance_from_zero": 0.013968003913760185,
+      "sect_target_minus_etf": 0.013925262726843357,
+      "oh_XLY": 0.013806379400193691,
+      "residual_percentile": 0.013737790286540985,
+      "sect_vol_rel_etf": 0.013557736761868,
+      "rule_volume_spike": 0.013482150621712208,
+      "residual_half_life_proxy": 0.01345523726195097
+    },
+    "family_importance": {
+      "raw": 0.0,
+      "percent": 0.2769523486495018,
+      "log": 0.0,
+      "Return": 0.0,
+      "Other": 0.7230477132834494
+    },
+    "fibonacci": {
+      "fib_23_hit": {
+        "hit_count": 96,
+        "trade_count": 19,
+        "avg_trade_return": 0.03549636976985403,
+        "win_rate": 1.0
+      },
+      "fib_38_hit": {
+        "hit_count": 67,
+        "trade_count": 19,
+        "avg_trade_return": 0.03549636976985403,
+        "win_rate": 1.0
+      },
+      "fib_50_hit": {
+        "hit_count": 45,
+        "trade_count": 19,
+        "avg_trade_return": 0.03549636976985403,
+        "win_rate": 1.0
+      },
+      "fib_61_hit": {
+        "hit_count": 19,
+        "trade_count": 10,
+        "avg_trade_return": 0.03164579640329861,
+        "win_rate": 1.0
+      },
+      "fib_78_hit": {
+        "hit_count": 4,
+        "trade_count": 2,
+        "avg_trade_return": 0.02905647181233556,
+        "win_rate": 1.0
+      }
+    },
+    "residual_diagnostics": {
+      "percent": {
+        "mean_z": 0.28645490483514197,
+        "std_z": 1.800681386074996,
+        "pct_abs_gt_1_25": 0.32280701754385965,
+        "pct_abs_gt_1_5": 0.23684210526315788,
+        "pct_abs_gt_2": 0.1280701754385965,
+        "pct_abs_gt_3": 0.03859649122807018
+      }
+    }
+  },
+  "C_LOG_with_return": {
+    "families": [
+      "log"
+    ],
+    "include_return": true,
+    "feature_count": 96,
+    "feature_breakdown": {
+      "raw": 0,
+      "percent": 0,
+      "log": 28,
+      "return": 1
+    },
+    "classification": {
+      "accuracy": 0.9771929824561404,
+      "f1_macro": 0.9768434473232475,
+      "f1_weighted": 0.9769231980428374,
+      "confusion_matrix": [
+        [
+          84,
+          1,
+          0
+        ],
+        [
+          0,
+          346,
+          0
+        ],
+        [
+          0,
+          12,
+          127
+        ]
+      ],
+      "class_report": {
+        "0": {
+          "precision": 1.0,
+          "recall": 0.9882352941176471,
+          "f1-score": 0.9940828402366864,
+          "support": 85.0
+        },
+        "1": {
+          "precision": 0.9637883008356546,
+          "recall": 1.0,
+          "f1-score": 0.9815602836879432,
+          "support": 346.0
+        },
+        "2": {
+          "precision": 1.0,
+          "recall": 0.9136690647482014,
+          "f1-score": 0.9548872180451128,
+          "support": 139.0
+        },
+        "accuracy": 0.9771929824561404,
+        "macro avg": {
+          "precision": 0.9879294336118849,
+          "recall": 0.9673014529552829,
+          "f1-score": 0.9768434473232475,
+          "support": 570.0
+        },
+        "weighted avg": {
+          "precision": 0.9780188633142747,
+          "recall": 0.9771929824561404,
+          "f1-score": 0.9769231980428374,
+          "support": 570.0
+        }
+      }
+    },
+    "backtest_metrics": {
+      "cumulative_return": 0.07550755169126355,
+      "annualized_return": 0.37963685953173365,
+      "annualized_vol": 0.03143653296522801,
+      "sharpe": 12.076295434730365,
+      "max_drawdown": -0.003131494726147932,
+      "win_rate": 0.8775510204081632,
+      "n_trades": 41,
+      "avg_trade_return": 0.015091558531198576,
+      "n_long": 127,
+      "n_short": 84,
+      "n_flat": 359,
+      "buy_hold_cum": 0.11206860349797054
+    },
+    "sector_perf": {
+      "net_pnl": {
+        "Materials": 0.23208932772236435,
+        "Technology": 0.22625612509813553,
+        "Health Care": 0.08793598425724947,
+        "Communication": 0.04603344867220327,
+        "Utilities": 0.04357627267307995,
+        "Energy": 0.04273476241437435,
+        "Real Estate": 0.039780952238855416,
+        "Consumer Staples": 0.01107949495246785,
+        "Consumer Disc.": 0.0,
+        "Financials": 0.0
+      },
+      "trades": {
+        "Materials": 12,
+        "Technology": 10,
+        "Health Care": 6,
+        "Communication": 2,
+        "Utilities": 4,
+        "Energy": 4,
+        "Real Estate": 1,
+        "Consumer Staples": 2,
+        "Consumer Disc.": 0,
+        "Financials": 0
+      },
+      "win_rate": {
+        "Materials": 0.8666666666666667,
+        "Technology": 0.9,
+        "Health Care": 0.75,
+        "Communication": 1.0,
+        "Utilities": 0.8,
+        "Energy": 1.0,
+        "Real Estate": 1.0,
+        "Consumer Staples": 1.0,
+        "Consumer Disc.": 0.0,
+        "Financials": 0.0
+      },
+      "avg_ret": {
+        "Materials": 0.01567262184815762,
+        "Technology": 0.022875612509813553,
+        "Health Care": 0.011179498032156183,
+        "Communication": 0.01551114955740109,
+        "Utilities": 0.008915254534615991,
+        "Energy": 0.00874695248287487,
+        "Real Estate": 0.019890476119427708,
+        "Consumer Staples": 0.01157949495246785,
+        "Consumer Disc.": 0.0,
+        "Financials": 0.0
+      }
+    },
+    "target_perf": {
+      "net_pnl": {
+        "FCX": 0.23208932772236435,
+        "AMD": 0.22625612509813553,
+        "UNH": 0.08793598425724947,
+        "GOOGL": 0.04603344867220327,
+        "AEP": 0.04357627267307995,
+        "XOM": 0.04273476241437435,
+        "PLD": 0.039780952238855416,
+        "PG": 0.01107949495246785,
+        "AMZN": 0.0,
+        "HD": 0.0,
+        "JPM": 0.0,
+        "TSM": 0.0
+      },
+      "trades": {
+        "FCX": 12,
+        "AMD": 10,
+        "UNH": 6,
+        "GOOGL": 2,
+        "AEP": 4,
+        "XOM": 4,
+        "PLD": 1,
+        "PG": 2,
+        "AMZN": 0,
+        "HD": 0,
+        "JPM": 0,
+        "TSM": 0
+      },
+      "win_rate": {
+        "FCX": 0.8666666666666667,
+        "AMD": 0.9,
+        "UNH": 0.75,
+        "GOOGL": 1.0,
+        "AEP": 0.8,
+        "XOM": 1.0,
+        "PLD": 1.0,
+        "PG": 1.0,
+        "AMZN": 0.0,
+        "HD": 0.0,
+        "JPM": 0.0,
+        "TSM": 0.0
+      },
+      "avg_ret": {
+        "FCX": 0.01567262184815762,
+        "AMD": 0.022875612509813553,
+        "UNH": 0.011179498032156183,
+        "GOOGL": 0.01551114955740109,
+        "AEP": 0.008915254534615991,
+        "XOM": 0.00874695248287487,
+        "PLD": 0.019890476119427708,
+        "PG": 0.01157949495246785,
+        "AMZN": 0.0,
+        "HD": 0.0,
+        "JPM": 0.0,
+        "TSM": 0.0
+      }
+    },
+    "top30_features": {
+      "oh_XLK": 0.025664810091257095,
+      "oh_XLV": 0.02458597719669342,
+      "oh_XLP": 0.021132472902536392,
+      "log_residual_ewm_mean": 0.020067470148205757,
+      "oh_XLB": 0.019228732213377953,
+      "rule_macd_above_sig": 0.01817650906741619,
+      "oh_XLE": 0.01810753159224987,
+      "residual_excursion_bucket": 0.017615407705307007,
+      "residual_distance_from_zero": 0.017382653430104256,
+      "px_ema200_ratio_z": 0.01697155274450779,
+      "px_ema50_ratio_z": 0.0168822780251503,
+      "rule_near_52w_high": 0.016809683293104172,
+      "rsi_z": 0.015079387463629246,
+      "log_residual_ewm_std": 0.015053908340632915,
+      "shadow_price_gap_pct": 0.014790486544370651,
+      "px_sma50_ratio_z": 0.014672094024717808,
+      "log_residual_abs_z": 0.014123067259788513,
+      "log_residual_distance_from_zero": 0.013959217816591263,
+      "oh_XLC": 0.013934532180428505,
+      "residual_abs_z": 0.013833875767886639,
+      "log_acceleration": 0.013801569119095802,
+      "residual_half_life_proxy": 0.01363801583647728,
+      "macd_signal_z": 0.013432826846837997,
+      "residual_percentile": 0.013399218209087849,
+      "oh_XLF": 0.013328221626579762,
+      "px_sma200_ratio_z": 0.013286897912621498,
+      "predicted_return": 0.01323707401752472,
+      "sect_target_minus_etf": 0.013088528998196125,
+      "log_residual": 0.013074904680252075,
+      "residual_rank": 0.013039815239608288
+    },
+    "family_importance": {
+      "raw": 0.0,
+      "percent": 0.0,
+      "log": 0.23681763606145978,
+      "Return": 0.01323707401752472,
+      "Other": 0.7499453292693943
+    },
+    "fibonacci": {
+      "fib_23_hit": {
+        "hit_count": 96,
+        "trade_count": 21,
+        "avg_trade_return": 0.03521363657279668,
+        "win_rate": 1.0
+      },
+      "fib_38_hit": {
+        "hit_count": 67,
+        "trade_count": 21,
+        "avg_trade_return": 0.03521363657279668,
+        "win_rate": 1.0
+      },
+      "fib_50_hit": {
+        "hit_count": 45,
+        "trade_count": 21,
+        "avg_trade_return": 0.03521363657279668,
+        "win_rate": 1.0
+      },
+      "fib_61_hit": {
+        "hit_count": 19,
+        "trade_count": 12,
+        "avg_trade_return": 0.031792775536207483,
+        "win_rate": 1.0
+      },
+      "fib_78_hit": {
+        "hit_count": 4,
+        "trade_count": 2,
+        "avg_trade_return": 0.02905647181233556,
+        "win_rate": 1.0
+      }
+    },
+    "residual_diagnostics": {
+      "log": {
+        "mean_z": 0.2745381788787703,
+        "std_z": 1.8110975904063975,
+        "pct_abs_gt_1_25": 0.32456140350877194,
+        "pct_abs_gt_1_5": 0.23684210526315788,
+        "pct_abs_gt_2": 0.12280701754385964,
+        "pct_abs_gt_3": 0.03333333333333333
+      }
+    }
+  },
+  "C_LOG_no_return": {
+    "families": [
+      "log"
+    ],
+    "include_return": false,
+    "feature_count": 95,
+    "feature_breakdown": {
+      "raw": 0,
+      "percent": 0,
+      "log": 28,
+      "return": 0
+    },
+    "classification": {
+      "accuracy": 0.9736842105263158,
+      "f1_macro": 0.9726074089888774,
+      "f1_weighted": 0.9733830708223327,
+      "confusion_matrix": [
+        [
+          83,
+          2,
+          0
+        ],
+        [
+          0,
+          346,
+          0
+        ],
+        [
+          0,
+          13,
+          126
+        ]
+      ],
+      "class_report": {
+        "0": {
+          "precision": 1.0,
+          "recall": 0.9764705882352941,
+          "f1-score": 0.9880952380952381,
+          "support": 85.0
+        },
+        "1": {
+          "precision": 0.9584487534626038,
+          "recall": 1.0,
+          "f1-score": 0.9787835926449788,
+          "support": 346.0
+        },
+        "2": {
+          "precision": 1.0,
+          "recall": 0.9064748201438849,
+          "f1-score": 0.9509433962264151,
+          "support": 139.0
+        },
+        "accuracy": 0.9736842105263158,
+        "macro avg": {
+          "precision": 0.9861495844875346,
+          "recall": 0.9609818027930598,
+          "f1-score": 0.9726074089888774,
+          "support": 570.0
+        },
+        "weighted avg": {
+          "precision": 0.974777664382563,
+          "recall": 0.9736842105263158,
+          "f1-score": 0.9733830708223327,
+          "support": 570.0
+        }
+      }
+    },
+    "backtest_metrics": {
+      "cumulative_return": 0.06712690983470582,
+      "annualized_return": 0.3327378685452558,
+      "annualized_vol": 0.030532525647906383,
+      "sharpe": 10.897816721168352,
+      "max_drawdown": -0.003131494726147932,
+      "win_rate": 0.8695652173913043,
+      "n_trades": 35,
+      "avg_trade_return": 0.014339169472665498,
+      "n_long": 126,
+      "n_short": 83,
+      "n_flat": 361,
+      "buy_hold_cum": 0.11206860349797054
+    },
+    "sector_perf": {
+      "net_pnl": {
+        "Technology": 0.22625612509813553,
+        "Materials": 0.16803398532086067,
+        "Health Care": 0.07360675437263597,
+        "Communication": 0.04603344867220327,
+        "Utilities": 0.04357627267307995,
+        "Energy": 0.04273476241437435,
+        "Real Estate": 0.039780952238855416,
+        "Consumer Staples": 0.01107949495246785,
+        "Consumer Disc.": 0.0,
+        "Financials": 0.0
+      },
+      "trades": {
+        "Technology": 10,
+        "Materials": 8,
+        "Health Care": 4,
+        "Communication": 2,
+        "Utilities": 4,
+        "Energy": 4,
+        "Real Estate": 1,
+        "Consumer Staples": 2,
+        "Consumer Disc.": 0,
+        "Financials": 0
+      },
+      "win_rate": {
+        "Technology": 0.9,
+        "Materials": 0.8461538461538461,
+        "Health Care": 0.7142857142857143,
+        "Communication": 1.0,
+        "Utilities": 0.8,
+        "Energy": 1.0,
+        "Real Estate": 1.0,
+        "Consumer Staples": 1.0,
+        "Consumer Disc.": 0.0,
+        "Financials": 0.0
+      },
+      "avg_ret": {
+        "Technology": 0.022875612509813553,
+        "Materials": 0.013079537332373898,
+        "Health Care": 0.010658107767519425,
+        "Communication": 0.01551114955740109,
+        "Utilities": 0.008915254534615991,
+        "Energy": 0.00874695248287487,
+        "Real Estate": 0.019890476119427708,
+        "Consumer Staples": 0.01157949495246785,
+        "Consumer Disc.": 0.0,
+        "Financials": 0.0
+      }
+    },
+    "target_perf": {
+      "net_pnl": {
+        "AMD": 0.22625612509813553,
+        "FCX": 0.16803398532086067,
+        "UNH": 0.07360675437263597,
+        "GOOGL": 0.04603344867220327,
+        "AEP": 0.04357627267307995,
+        "XOM": 0.04273476241437435,
+        "PLD": 0.039780952238855416,
+        "PG": 0.01107949495246785,
+        "AMZN": 0.0,
+        "HD": 0.0,
+        "JPM": 0.0,
+        "TSM": 0.0
+      },
+      "trades": {
+        "AMD": 10,
+        "FCX": 8,
+        "UNH": 4,
+        "GOOGL": 2,
+        "AEP": 4,
+        "XOM": 4,
+        "PLD": 1,
+        "PG": 2,
+        "AMZN": 0,
+        "HD": 0,
+        "JPM": 0,
+        "TSM": 0
+      },
+      "win_rate": {
+        "AMD": 0.9,
+        "FCX": 0.8461538461538461,
+        "UNH": 0.7142857142857143,
+        "GOOGL": 1.0,
+        "AEP": 0.8,
+        "XOM": 1.0,
+        "PLD": 1.0,
+        "PG": 1.0,
+        "AMZN": 0.0,
+        "HD": 0.0,
+        "JPM": 0.0,
+        "TSM": 0.0
+      },
+      "avg_ret": {
+        "AMD": 0.022875612509813553,
+        "FCX": 0.013079537332373898,
+        "UNH": 0.010658107767519425,
+        "GOOGL": 0.01551114955740109,
+        "AEP": 0.008915254534615991,
+        "XOM": 0.00874695248287487,
+        "PLD": 0.019890476119427708,
+        "PG": 0.01157949495246785,
+        "AMZN": 0.0,
+        "HD": 0.0,
+        "JPM": 0.0,
+        "TSM": 0.0
+      }
+    },
+    "top30_features": {
+      "oh_XLV": 0.02477743849158287,
+      "log_residual_rank": 0.023635748773813248,
+      "oh_XLK": 0.022680319845676422,
+      "rule_obv_trend_pos": 0.022334668785333633,
+      "oh_XLP": 0.020244967192411423,
+      "rule_px_gt_sma20": 0.020094724372029305,
+      "oh_XLB": 0.019438304007053375,
+      "log_residual_ewm_mean": 0.01930290088057518,
+      "rule_volume_spike": 0.017317842692136765,
+      "oh_XLC": 0.017229992896318436,
+      "residual_distance_from_zero": 0.016951747238636017,
+      "oh_XLE": 0.015493351966142654,
+      "residual_ewm_z": 0.0152805857360363,
+      "px_ema200_ratio_z": 0.015052148140966892,
+      "residual_abs_z": 0.014996698126196861,
+      "shadow_price_gap_pct": 0.014858570881187916,
+      "px_sma50_ratio_z": 0.01452668011188507,
+      "log_residual_ewm_std": 0.0144813172519207,
+      "rsi_z": 0.014450750313699245,
+      "residual_sign": 0.014309574849903584,
+      "log_residual": 0.014304064214229584,
+      "px_ema50_ratio_z": 0.01412031427025795,
+      "log_residual_abs_z": 0.014017710462212563,
+      "residual_half_life_proxy": 0.013847493566572666,
+      "px_sma200_ratio_z": 0.013820251449942589,
+      "log_residual_regime_normal": 0.013643459416925907,
+      "rule_near_52w_high": 0.01361120492219925,
+      "sect_corr_etf": 0.013558404520154,
+      "macd_signal_z": 0.013204993680119514,
+      "log_residual_distance_from_zero": 0.013202059082686901
+    },
+    "family_importance": {
+      "raw": 0.0,
+      "percent": 0.0,
+      "log": 0.25910781137645245,
+      "Return": 0.0,
+      "Other": 0.7408920973539352
+    },
+    "fibonacci": {
+      "fib_23_hit": {
+        "hit_count": 96,
+        "trade_count": 18,
+        "avg_trade_return": 0.036644544207922944,
+        "win_rate": 1.0
+      },
+      "fib_38_hit": {
+        "hit_count": 67,
+        "trade_count": 18,
+        "avg_trade_return": 0.036644544207922944,
+        "win_rate": 1.0
+      },
+      "fib_50_hit": {
+        "hit_count": 45,
+        "trade_count": 18,
+        "avg_trade_return": 0.036644544207922944,
+        "win_rate": 1.0
+      },
+      "fib_61_hit": {
+        "hit_count": 19,
+        "trade_count": 10,
+        "avg_trade_return": 0.03164579640329861,
+        "win_rate": 1.0
+      },
+      "fib_78_hit": {
+        "hit_count": 4,
+        "trade_count": 2,
+        "avg_trade_return": 0.02905647181233556,
+        "win_rate": 1.0
+      }
+    },
+    "residual_diagnostics": {
+      "log": {
+        "mean_z": 0.2745381788787703,
+        "std_z": 1.8110975904063975,
+        "pct_abs_gt_1_25": 0.32456140350877194,
+        "pct_abs_gt_1_5": 0.23684210526315788,
+        "pct_abs_gt_2": 0.12280701754385964,
+        "pct_abs_gt_3": 0.03333333333333333
+      }
+    }
+  },
+  "D_RAW_PERCENT_with_return": {
+    "families": [
+      "raw",
+      "percent"
+    ],
+    "include_return": true,
+    "feature_count": 124,
+    "feature_breakdown": {
+      "raw": 28,
+      "percent": 28,
+      "log": 0,
+      "return": 1
+    },
+    "classification": {
+      "accuracy": 0.9754385964912281,
+      "f1_macro": 0.9743841426039129,
+      "f1_weighted": 0.9751863662187126,
+      "confusion_matrix": [
+        [
+          83,
+          2,
+          0
+        ],
+        [
+          0,
+          346,
+          0
+        ],
+        [
+          0,
+          12,
+          127
+        ]
+      ],
+      "class_report": {
+        "0": {
+          "precision": 1.0,
+          "recall": 0.9764705882352941,
+          "f1-score": 0.9880952380952381,
+          "support": 85.0
+        },
+        "1": {
+          "precision": 0.9611111111111111,
+          "recall": 1.0,
+          "f1-score": 0.9801699716713881,
+          "support": 346.0
+        },
+        "2": {
+          "precision": 1.0,
+          "recall": 0.9136690647482014,
+          "f1-score": 0.9548872180451128,
+          "support": 139.0
+        },
+        "accuracy": 0.9754385964912281,
+        "macro avg": {
+          "precision": 0.987037037037037,
+          "recall": 0.963379884327832,
+          "f1-score": 0.9743841426039129,
+          "support": 570.0
+        },
+        "weighted avg": {
+          "precision": 0.9763937621832359,
+          "recall": 0.9754385964912281,
+          "f1-score": 0.9751863662187126,
+          "support": 570.0
+        }
+      }
+    },
+    "backtest_metrics": {
+      "cumulative_return": 0.07601218414577726,
+      "annualized_return": 0.3825010423715134,
+      "annualized_vol": 0.03173393012004137,
+      "sharpe": 12.053377596932034,
+      "max_drawdown": -0.003131494726147821,
+      "win_rate": 0.8627450980392157,
+      "n_trades": 43,
+      "avg_trade_return": 0.014602042991857678,
+      "n_long": 127,
+      "n_short": 83,
+      "n_flat": 360,
+      "buy_hold_cum": 0.11206860349797054
+    },
+    "sector_perf": {
+      "net_pnl": {
+        "Materials": 0.23208932772236435,
+        "Technology": 0.22625612509813553,
+        "Health Care": 0.08793598425724947,
+        "Communication": 0.05075127322821471,
+        "Utilities": 0.04357627267307995,
+        "Energy": 0.04273476241437435,
+        "Real Estate": 0.039780952238855416,
+        "Consumer Staples": 0.01107949495246785,
+        "Consumer Disc.": 0.0,
+        "Financials": 0.0
+      },
+      "trades": {
+        "Materials": 12,
+        "Technology": 10,
+        "Health Care": 6,
+        "Communication": 4,
+        "Utilities": 4,
+        "Energy": 4,
+        "Real Estate": 1,
+        "Consumer Staples": 2,
+        "Consumer Disc.": 0,
+        "Financials": 0
+      },
+      "win_rate": {
+        "Materials": 0.8666666666666667,
+        "Technology": 0.9,
+        "Health Care": 0.75,
+        "Communication": 0.8,
+        "Utilities": 0.8,
+        "Energy": 1.0,
+        "Real Estate": 1.0,
+        "Consumer Staples": 1.0,
+        "Consumer Disc.": 0.0,
+        "Financials": 0.0
+      },
+      "avg_ret": {
+        "Materials": 0.01567262184815762,
+        "Technology": 0.022875612509813553,
+        "Health Care": 0.011179498032156183,
+        "Communication": 0.010350254645642942,
+        "Utilities": 0.008915254534615991,
+        "Energy": 0.00874695248287487,
+        "Real Estate": 0.019890476119427708,
+        "Consumer Staples": 0.01157949495246785,
+        "Consumer Disc.": 0.0,
+        "Financials": 0.0
+      }
+    },
+    "target_perf": {
+      "net_pnl": {
+        "FCX": 0.23208932772236435,
+        "AMD": 0.22625612509813553,
+        "UNH": 0.08793598425724947,
+        "GOOGL": 0.05075127322821471,
+        "AEP": 0.04357627267307995,
+        "XOM": 0.04273476241437435,
+        "PLD": 0.039780952238855416,
+        "PG": 0.01107949495246785,
+        "AMZN": 0.0,
+        "HD": 0.0,
+        "JPM": 0.0,
+        "TSM": 0.0
+      },
+      "trades": {
+        "FCX": 12,
+        "AMD": 10,
+        "UNH": 6,
+        "GOOGL": 4,
+        "AEP": 4,
+        "XOM": 4,
+        "PLD": 1,
+        "PG": 2,
+        "AMZN": 0,
+        "HD": 0,
+        "JPM": 0,
+        "TSM": 0
+      },
+      "win_rate": {
+        "FCX": 0.8666666666666667,
+        "AMD": 0.9,
+        "UNH": 0.75,
+        "GOOGL": 0.8,
+        "AEP": 0.8,
+        "XOM": 1.0,
+        "PLD": 1.0,
+        "PG": 1.0,
+        "AMZN": 0.0,
+        "HD": 0.0,
+        "JPM": 0.0,
+        "TSM": 0.0
+      },
+      "avg_ret": {
+        "FCX": 0.01567262184815762,
+        "AMD": 0.022875612509813553,
+        "UNH": 0.011179498032156183,
+        "GOOGL": 0.010350254645642942,
+        "AEP": 0.008915254534615991,
+        "XOM": 0.00874695248287487,
+        "PLD": 0.019890476119427708,
+        "PG": 0.01157949495246785,
+        "AMZN": 0.0,
+        "HD": 0.0,
+        "JPM": 0.0,
+        "TSM": 0.0
+      }
+    },
+    "top30_features": {
+      "oh_XLK": 0.02575838565826416,
+      "raw_residual_z": 0.023826036602258682,
+      "rule_macd_above_sig": 0.022411180660128593,
+      "oh_XLP": 0.017490647733211517,
+      "percent_residual_ewm_mean": 0.01569385826587677,
+      "oh_XLC": 0.01495025958865881,
+      "residual_percentile": 0.014571158215403557,
+      "oh_XLB": 0.014099687337875366,
+      "percent_fib_retrace_pct": 0.013964936137199402,
+      "residual_distance_from_zero": 0.013882633298635483,
+      "raw_residual_ewm_z": 0.01367960311472416,
+      "raw_residual_regime_elevated": 0.013607114553451538,
+      "raw_residual_ewm_std": 0.013558618724346161,
+      "rule_px_gt_sma200": 0.013331512920558453,
+      "residual_half_life_proxy": 0.013274162076413631,
+      "residual_abs_z": 0.01325747836381197,
+      "residual_ewm_z": 0.013195469975471497,
+      "px_ema200_ratio_z": 0.013037750497460365,
+      "px_ema50_ratio_z": 0.012514280155301094,
+      "rule_sma20_gt_50": 0.012488028034567833,
+      "shadow_price_gap_pct": 0.012486695311963558,
+      "raw_residual_distance_from_zero": 0.012441655620932579,
+      "raw_residual_ewm_mean": 0.012251007370650768,
+      "rsi_z": 0.012160643003880978,
+      "percent_residual_ewm_std": 0.01208072155714035,
+      "sect_corr_etf": 0.011993496678769588,
+      "px_sma50_ratio_z": 0.011940663680434227,
+      "residual_rank": 0.011489499360322952,
+      "sect_target_minus_etf": 0.01129907462745905,
+      "predicted_return": 0.011164721101522446
+    },
+    "family_importance": {
+      "raw": 0.20656074630096555,
+      "percent": 0.18614382192026824,
+      "log": 0.0,
+      "Return": 0.011164721101522446,
+      "Other": 0.5961306537501514
+    },
+    "fibonacci": {
+      "fib_23_hit": {
+        "hit_count": 96,
+        "trade_count": 22,
+        "avg_trade_return": 0.033850190572033714,
+        "win_rate": 1.0
+      },
+      "fib_38_hit": {
+        "hit_count": 67,
+        "trade_count": 22,
+        "avg_trade_return": 0.033850190572033714,
+        "win_rate": 1.0
+      },
+      "fib_50_hit": {
+        "hit_count": 45,
+        "trade_count": 22,
+        "avg_trade_return": 0.033850190572033714,
+        "win_rate": 1.0
+      },
+      "fib_61_hit": {
+        "hit_count": 19,
+        "trade_count": 13,
+        "avg_trade_return": 0.029748548537730863,
+        "win_rate": 1.0
+      },
+      "fib_78_hit": {
+        "hit_count": 4,
+        "trade_count": 3,
+        "avg_trade_return": 0.021110256060227522,
+        "win_rate": 1.0
+      }
+    },
+    "residual_diagnostics": {
+      "raw": {
+        "mean_z": 0.295010540345924,
+        "std_z": 1.8158992553941475,
+        "pct_abs_gt_1_25": 0.3385964912280702,
+        "pct_abs_gt_1_5": 0.24561403508771928,
+        "pct_abs_gt_2": 0.12456140350877193,
+        "pct_abs_gt_3": 0.03508771929824561
+      },
+      "percent": {
+        "mean_z": 0.28645490483514197,
+        "std_z": 1.800681386074996,
+        "pct_abs_gt_1_25": 0.32280701754385965,
+        "pct_abs_gt_1_5": 0.23684210526315788,
+        "pct_abs_gt_2": 0.1280701754385965,
+        "pct_abs_gt_3": 0.03859649122807018
+      }
+    }
+  },
+  "D_RAW_PERCENT_no_return": {
+    "families": [
+      "raw",
+      "percent"
+    ],
+    "include_return": false,
+    "feature_count": 123,
+    "feature_breakdown": {
+      "raw": 28,
+      "percent": 28,
+      "log": 0,
+      "return": 0
+    },
+    "classification": {
+      "accuracy": 0.9719298245614035,
+      "f1_macro": 0.9693973208154824,
+      "f1_weighted": 0.971687581574804,
+      "confusion_matrix": [
+        [
+          81,
+          4,
+          0
+        ],
+        [
+          0,
+          346,
+          0
+        ],
+        [
+          0,
+          12,
+          127
+        ]
+      ],
+      "class_report": {
+        "0": {
+          "precision": 1.0,
+          "recall": 0.9529411764705882,
+          "f1-score": 0.9759036144578314,
+          "support": 85.0
+        },
+        "1": {
+          "precision": 0.9558011049723757,
+          "recall": 1.0,
+          "f1-score": 0.9774011299435028,
+          "support": 346.0
+        },
+        "2": {
+          "precision": 1.0,
+          "recall": 0.9136690647482014,
+          "f1-score": 0.9548872180451128,
+          "support": 139.0
+        },
+        "accuracy": 0.9719298245614035,
+        "macro avg": {
+          "precision": 0.9852670349907919,
+          "recall": 0.9555367470729298,
+          "f1-score": 0.9693973208154824,
+          "support": 570.0
+        },
+        "weighted avg": {
+          "precision": 0.9731704952990209,
+          "recall": 0.9719298245614035,
+          "f1-score": 0.971687581574804,
+          "support": 570.0
+        }
+      }
+    },
+    "backtest_metrics": {
+      "cumulative_return": 0.07841996065050649,
+      "annualized_return": 0.39623046485070823,
+      "annualized_vol": 0.032064574049394085,
+      "sharpe": 12.357265817419947,
+      "max_drawdown": -0.0026267288450579906,
+      "win_rate": 0.8727272727272727,
+      "n_trades": 43,
+      "avg_trade_return": 0.013947421433245835,
+      "n_long": 127,
+      "n_short": 81,
+      "n_flat": 362,
+      "buy_hold_cum": 0.11206860349797054
+    },
+    "sector_perf": {
+      "net_pnl": {
+        "Materials": 0.23208932772236435,
+        "Technology": 0.22625612509813553,
+        "Health Care": 0.08793598425724947,
+        "Communication": 0.04603344867220327,
+        "Utilities": 0.04357627267307995,
+        "Energy": 0.04273476241437435,
+        "Real Estate": 0.039780952238855416,
+        "Consumer Disc.": 0.027121810799790813,
+        "Consumer Staples": 0.01107949495246785,
+        "Financials": 0.0
+      },
+      "trades": {
+        "Materials": 12,
+        "Technology": 10,
+        "Health Care": 6,
+        "Communication": 2,
+        "Utilities": 4,
+        "Energy": 4,
+        "Real Estate": 1,
+        "Consumer Disc.": 2,
+        "Consumer Staples": 2,
+        "Financials": 0
+      },
+      "win_rate": {
+        "Materials": 0.8666666666666667,
+        "Technology": 0.9,
+        "Health Care": 0.75,
+        "Communication": 1.0,
+        "Utilities": 0.8,
+        "Energy": 1.0,
+        "Real Estate": 1.0,
+        "Consumer Disc.": 0.8333333333333334,
+        "Consumer Staples": 1.0,
+        "Financials": 0.0
+      },
+      "avg_ret": {
+        "Materials": 0.01567262184815762,
+        "Technology": 0.022875612509813553,
+        "Health Care": 0.011179498032156183,
+        "Communication": 0.01551114955740109,
+        "Utilities": 0.008915254534615991,
+        "Energy": 0.00874695248287487,
+        "Real Estate": 0.019890476119427708,
+        "Consumer Disc.": 0.004603635133298469,
+        "Consumer Staples": 0.01157949495246785,
+        "Financials": 0.0
+      }
+    },
+    "target_perf": {
+      "net_pnl": {
+        "FCX": 0.23208932772236435,
+        "AMD": 0.22625612509813553,
+        "UNH": 0.08793598425724947,
+        "GOOGL": 0.04603344867220327,
+        "AEP": 0.04357627267307995,
+        "XOM": 0.04273476241437435,
+        "PLD": 0.039780952238855416,
+        "HD": 0.027121810799790813,
+        "PG": 0.01107949495246785,
+        "AMZN": 0.0,
+        "JPM": 0.0,
+        "TSM": 0.0
+      },
+      "trades": {
+        "FCX": 12,
+        "AMD": 10,
+        "UNH": 6,
+        "GOOGL": 2,
+        "AEP": 4,
+        "XOM": 4,
+        "PLD": 1,
+        "HD": 2,
+        "PG": 2,
+        "AMZN": 0,
+        "JPM": 0,
+        "TSM": 0
+      },
+      "win_rate": {
+        "FCX": 0.8666666666666667,
+        "AMD": 0.9,
+        "UNH": 0.75,
+        "GOOGL": 1.0,
+        "AEP": 0.8,
+        "XOM": 1.0,
+        "PLD": 1.0,
+        "HD": 0.8333333333333334,
+        "PG": 1.0,
+        "AMZN": 0.0,
+        "JPM": 0.0,
+        "TSM": 0.0
+      },
+      "avg_ret": {
+        "FCX": 0.01567262184815762,
+        "AMD": 0.022875612509813553,
+        "UNH": 0.011179498032156183,
+        "GOOGL": 0.01551114955740109,
+        "AEP": 0.008915254534615991,
+        "XOM": 0.00874695248287487,
+        "PLD": 0.019890476119427708,
+        "HD": 0.004603635133298469,
+        "PG": 0.01157949495246785,
+        "AMZN": 0.0,
+        "JPM": 0.0,
+        "TSM": 0.0
+      }
+    },
+    "top30_features": {
+      "oh_XLK": 0.020088493824005127,
+      "oh_XLP": 0.020026134327054024,
+      "percent_residual_ewm_mean": 0.017393209040164948,
+      "residual_excursion_bucket": 0.015564181841909885,
+      "raw_residual_ewm_std": 0.015064512379467487,
+      "px_ema200_ratio_z": 0.014646366238594055,
+      "raw_residual_abs_z": 0.014640181325376034,
+      "oh_XLB": 0.014362071640789509,
+      "residual_distance_from_zero": 0.014174516312777996,
+      "rule_sma50_gt_200": 0.01414396520704031,
+      "rule_sma20_gt_50": 0.013657845556735992,
+      "raw_residual_ewm_mean": 0.013009979389607906,
+      "shadow_price_gap_pct": 0.012892600148916245,
+      "raw_residual_regime_elevated": 0.01268252357840538,
+      "rsi_z": 0.012672803364694118,
+      "raw_residual": 0.012583456933498383,
+      "px_sma50_ratio_z": 0.012503428384661674,
+      "px_ema50_ratio_z": 0.012423780746757984,
+      "sect_corr_etf": 0.012384305708110332,
+      "residual_abs_z": 0.012148807756602764,
+      "percent_fib_retrace_pct": 0.012130053713917732,
+      "percent_residual_ewm_std": 0.012092351913452148,
+      "percent_residual_distance_from_zero": 0.011786670424044132,
+      "percent_days_above_2_sigma": 0.011772393248975277,
+      "residual_ewm_z": 0.011645105667412281,
+      "residual_half_life_proxy": 0.01164112240076065,
+      "percent_residual_abs_z": 0.011459053494036198,
+      "sect_vol_rel_etf": 0.011458602733910084,
+      "px_sma200_ratio_z": 0.011422466486692429,
+      "rule_px_gt_sma200": 0.01130406092852354
+    },
+    "family_importance": {
+      "raw": 0.1910833651199937,
+      "percent": 0.198409135453403,
+      "log": 0.0,
+      "Return": 0.0,
+      "Other": 0.6105076507665217
+    },
+    "fibonacci": {
+      "fib_23_hit": {
+        "hit_count": 96,
+        "trade_count": 22,
+        "avg_trade_return": 0.03486855358311459,
+        "win_rate": 1.0
+      },
+      "fib_38_hit": {
+        "hit_count": 67,
+        "trade_count": 22,
+        "avg_trade_return": 0.03486855358311459,
+        "win_rate": 1.0
+      },
+      "fib_50_hit": {
+        "hit_count": 45,
+        "trade_count": 22,
+        "avg_trade_return": 0.03486855358311459,
+        "win_rate": 1.0
+      },
+      "fib_61_hit": {
+        "hit_count": 19,
+        "trade_count": 12,
+        "avg_trade_return": 0.031792775536207483,
+        "win_rate": 1.0
+      },
+      "fib_78_hit": {
+        "hit_count": 4,
+        "trade_count": 2,
+        "avg_trade_return": 0.02905647181233556,
+        "win_rate": 1.0
+      }
+    },
+    "residual_diagnostics": {
+      "raw": {
+        "mean_z": 0.295010540345924,
+        "std_z": 1.8158992553941475,
+        "pct_abs_gt_1_25": 0.3385964912280702,
+        "pct_abs_gt_1_5": 0.24561403508771928,
+        "pct_abs_gt_2": 0.12456140350877193,
+        "pct_abs_gt_3": 0.03508771929824561
+      },
+      "percent": {
+        "mean_z": 0.28645490483514197,
+        "std_z": 1.800681386074996,
+        "pct_abs_gt_1_25": 0.32280701754385965,
+        "pct_abs_gt_1_5": 0.23684210526315788,
+        "pct_abs_gt_2": 0.1280701754385965,
+        "pct_abs_gt_3": 0.03859649122807018
+      }
+    }
+  },
+  "E_RAW_LOG_with_return": {
+    "families": [
+      "log",
+      "raw"
+    ],
+    "include_return": true,
+    "feature_count": 124,
+    "feature_breakdown": {
+      "raw": 28,
+      "percent": 0,
+      "log": 28,
+      "return": 1
+    },
+    "classification": {
+      "accuracy": 0.9789473684210527,
+      "f1_macro": 0.9786129612728575,
+      "f1_weighted": 0.9787240743633183,
+      "confusion_matrix": [
+        [
+          84,
+          1,
+          0
+        ],
+        [
+          0,
+          346,
+          0
+        ],
+        [
+          0,
+          11,
+          128
+        ]
+      ],
+      "class_report": {
+        "0": {
+          "precision": 1.0,
+          "recall": 0.9882352941176471,
+          "f1-score": 0.9940828402366864,
+          "support": 85.0
+        },
+        "1": {
+          "precision": 0.9664804469273743,
+          "recall": 1.0,
+          "f1-score": 0.9829545454545454,
+          "support": 346.0
+        },
+        "2": {
+          "precision": 1.0,
+          "recall": 0.920863309352518,
+          "f1-score": 0.9588014981273408,
+          "support": 139.0
+        },
+        "accuracy": 0.9789473684210527,
+        "macro avg": {
+          "precision": 0.9888268156424581,
+          "recall": 0.9696995344900551,
+          "f1-score": 0.9786129612728575,
+          "support": 570.0
+        },
+        "weighted avg": {
+          "precision": 0.9796530432225816,
+          "recall": 0.9789473684210527,
+          "f1-score": 0.9787240743633183,
+          "support": 570.0
+        }
+      }
+    },
+    "backtest_metrics": {
+      "cumulative_return": 0.07601218414577726,
+      "annualized_return": 0.3825010423715134,
+      "annualized_vol": 0.03173393012004137,
+      "sharpe": 12.053377596932034,
+      "max_drawdown": -0.003131494726147821,
+      "win_rate": 0.8627450980392157,
+      "n_trades": 43,
+      "avg_trade_return": 0.014602042991857678,
+      "n_long": 128,
+      "n_short": 84,
+      "n_flat": 358,
+      "buy_hold_cum": 0.11206860349797054
+    },
+    "sector_perf": {
+      "net_pnl": {
+        "Materials": 0.23208932772236435,
+        "Technology": 0.22625612509813553,
+        "Health Care": 0.08793598425724947,
+        "Communication": 0.05075127322821471,
+        "Utilities": 0.04357627267307995,
+        "Energy": 0.04273476241437435,
+        "Real Estate": 0.039780952238855416,
+        "Consumer Staples": 0.01107949495246785,
+        "Consumer Disc.": 0.0,
+        "Financials": 0.0
+      },
+      "trades": {
+        "Materials": 12,
+        "Technology": 10,
+        "Health Care": 6,
+        "Communication": 4,
+        "Utilities": 4,
+        "Energy": 4,
+        "Real Estate": 1,
+        "Consumer Staples": 2,
+        "Consumer Disc.": 0,
+        "Financials": 0
+      },
+      "win_rate": {
+        "Materials": 0.8666666666666667,
+        "Technology": 0.9,
+        "Health Care": 0.75,
+        "Communication": 0.8,
+        "Utilities": 0.8,
+        "Energy": 1.0,
+        "Real Estate": 1.0,
+        "Consumer Staples": 1.0,
+        "Consumer Disc.": 0.0,
+        "Financials": 0.0
+      },
+      "avg_ret": {
+        "Materials": 0.01567262184815762,
+        "Technology": 0.022875612509813553,
+        "Health Care": 0.011179498032156183,
+        "Communication": 0.010350254645642942,
+        "Utilities": 0.008915254534615991,
+        "Energy": 0.00874695248287487,
+        "Real Estate": 0.019890476119427708,
+        "Consumer Staples": 0.01157949495246785,
+        "Consumer Disc.": 0.0,
+        "Financials": 0.0
+      }
+    },
+    "target_perf": {
+      "net_pnl": {
+        "FCX": 0.23208932772236435,
+        "AMD": 0.22625612509813553,
+        "UNH": 0.08793598425724947,
+        "GOOGL": 0.05075127322821471,
+        "AEP": 0.04357627267307995,
+        "XOM": 0.04273476241437435,
+        "PLD": 0.039780952238855416,
+        "PG": 0.01107949495246785,
+        "AMZN": 0.0,
+        "HD": 0.0,
+        "JPM": 0.0,
+        "TSM": 0.0
+      },
+      "trades": {
+        "FCX": 12,
+        "AMD": 10,
+        "UNH": 6,
+        "GOOGL": 4,
+        "AEP": 4,
+        "XOM": 4,
+        "PLD": 1,
+        "PG": 2,
+        "AMZN": 0,
+        "HD": 0,
+        "JPM": 0,
+        "TSM": 0
+      },
+      "win_rate": {
+        "FCX": 0.8666666666666667,
+        "AMD": 0.9,
+        "UNH": 0.75,
+        "GOOGL": 0.8,
+        "AEP": 0.8,
+        "XOM": 1.0,
+        "PLD": 1.0,
+        "PG": 1.0,
+        "AMZN": 0.0,
+        "HD": 0.0,
+        "JPM": 0.0,
+        "TSM": 0.0
+      },
+      "avg_ret": {
+        "FCX": 0.01567262184815762,
+        "AMD": 0.022875612509813553,
+        "UNH": 0.011179498032156183,
+        "GOOGL": 0.010350254645642942,
+        "AEP": 0.008915254534615991,
+        "XOM": 0.00874695248287487,
+        "PLD": 0.019890476119427708,
+        "PG": 0.01157949495246785,
+        "AMZN": 0.0,
+        "HD": 0.0,
+        "JPM": 0.0,
+        "TSM": 0.0
+      }
+    },
+    "top30_features": {
+      "oh_XLK": 0.024165503680706024,
+      "raw_residual_z": 0.023730656132102013,
+      "rule_macd_above_sig": 0.019472798332571983,
+      "oh_XLE": 0.017330247908830643,
+      "oh_XLP": 0.017315104603767395,
+      "log_residual_ewm_mean": 0.017234833911061287,
+      "oh_XLB": 0.015480801463127136,
+      "residual_distance_from_zero": 0.014597345143556595,
+      "raw_residual_ewm_std": 0.014575519599020481,
+      "px_ema200_ratio_z": 0.013493678532540798,
+      "log_fib_retrace_pct": 0.01340126246213913,
+      "rule_sma20_gt_50": 0.013144725002348423,
+      "px_ema50_ratio_z": 0.01306485291570425,
+      "residual_abs_z": 0.012989547103643417,
+      "log_residual": 0.012805615551769733,
+      "raw_residual_distance_from_zero": 0.012792639434337616,
+      "rsi_z": 0.0124042434617877,
+      "sect_corr_etf": 0.012073126621544361,
+      "rule_obv_trend_pos": 0.011865802109241486,
+      "shadow_price_gap_pct": 0.011780111119151115,
+      "raw_residual": 0.011743251234292984,
+      "px_sma50_ratio_z": 0.011742687784135342,
+      "raw_residual_ewm_mean": 0.011727050878107548,
+      "log_residual_ewm_std": 0.011623848229646683,
+      "oh_XLF": 0.01158861629664898,
+      "px_sma200_ratio_z": 0.011571913957595825,
+      "residual_ewm_z": 0.011424781754612923,
+      "residual_percentile": 0.011321795172989368,
+      "px_ema20_ratio_z": 0.011298744939267635,
+      "residual_rank": 0.011240644380450249
+    },
+    "family_importance": {
+      "raw": 0.19937037443742156,
+      "percent": 0.0,
+      "log": 0.18899144139140844,
+      "Return": 0.010864055715501308,
+      "Other": 0.600774186430499
+    },
+    "fibonacci": {
+      "fib_23_hit": {
+        "hit_count": 96,
+        "trade_count": 22,
+        "avg_trade_return": 0.033850190572033714,
+        "win_rate": 1.0
+      },
+      "fib_38_hit": {
+        "hit_count": 67,
+        "trade_count": 22,
+        "avg_trade_return": 0.033850190572033714,
+        "win_rate": 1.0
+      },
+      "fib_50_hit": {
+        "hit_count": 45,
+        "trade_count": 22,
+        "avg_trade_return": 0.033850190572033714,
+        "win_rate": 1.0
+      },
+      "fib_61_hit": {
+        "hit_count": 19,
+        "trade_count": 13,
+        "avg_trade_return": 0.029748548537730863,
+        "win_rate": 1.0
+      },
+      "fib_78_hit": {
+        "hit_count": 4,
+        "trade_count": 3,
+        "avg_trade_return": 0.021110256060227522,
+        "win_rate": 1.0
+      }
+    },
+    "residual_diagnostics": {
+      "log": {
+        "mean_z": 0.2745381788787703,
+        "std_z": 1.8110975904063975,
+        "pct_abs_gt_1_25": 0.32456140350877194,
+        "pct_abs_gt_1_5": 0.23684210526315788,
+        "pct_abs_gt_2": 0.12280701754385964,
+        "pct_abs_gt_3": 0.03333333333333333
+      },
+      "raw": {
+        "mean_z": 0.295010540345924,
+        "std_z": 1.8158992553941475,
+        "pct_abs_gt_1_25": 0.3385964912280702,
+        "pct_abs_gt_1_5": 0.24561403508771928,
+        "pct_abs_gt_2": 0.12456140350877193,
+        "pct_abs_gt_3": 0.03508771929824561
+      }
+    }
+  },
+  "E_RAW_LOG_no_return": {
+    "families": [
+      "log",
+      "raw"
+    ],
+    "include_return": false,
+    "feature_count": 123,
+    "feature_breakdown": {
+      "raw": 28,
+      "percent": 0,
+      "log": 28,
+      "return": 0
+    },
+    "classification": {
+      "accuracy": 0.9771929824561404,
+      "f1_macro": 0.9768434473232475,
+      "f1_weighted": 0.9769231980428374,
+      "confusion_matrix": [
+        [
+          84,
+          1,
+          0
+        ],
+        [
+          0,
+          346,
+          0
+        ],
+        [
+          0,
+          12,
+          127
+        ]
+      ],
+      "class_report": {
+        "0": {
+          "precision": 1.0,
+          "recall": 0.9882352941176471,
+          "f1-score": 0.9940828402366864,
+          "support": 85.0
+        },
+        "1": {
+          "precision": 0.9637883008356546,
+          "recall": 1.0,
+          "f1-score": 0.9815602836879432,
+          "support": 346.0
+        },
+        "2": {
+          "precision": 1.0,
+          "recall": 0.9136690647482014,
+          "f1-score": 0.9548872180451128,
+          "support": 139.0
+        },
+        "accuracy": 0.9771929824561404,
+        "macro avg": {
+          "precision": 0.9879294336118849,
+          "recall": 0.9673014529552829,
+          "f1-score": 0.9768434473232475,
+          "support": 570.0
+        },
+        "weighted avg": {
+          "precision": 0.9780188633142747,
+          "recall": 0.9771929824561404,
+          "f1-score": 0.9769231980428374,
+          "support": 570.0
+        }
+      }
+    },
+    "backtest_metrics": {
+      "cumulative_return": 0.07209891886813624,
+      "annualized_return": 0.3604102604160875,
+      "annualized_vol": 0.031453494554847944,
+      "sharpe": 11.458512496524405,
+      "max_drawdown": -0.003131494726147932,
+      "win_rate": 0.8913043478260869,
+      "n_trades": 39,
+      "avg_trade_return": 0.01537400515396442,
+      "n_long": 127,
+      "n_short": 84,
+      "n_flat": 359,
+      "buy_hold_cum": 0.11206860349797054
+    },
+    "sector_perf": {
+      "net_pnl": {
+        "Technology": 0.22625612509813553,
+        "Materials": 0.2003071967759975,
+        "Health Care": 0.08793598425724947,
+        "Communication": 0.04603344867220327,
+        "Utilities": 0.04357627267307995,
+        "Energy": 0.04273476241437435,
+        "Real Estate": 0.039780952238855416,
+        "Consumer Staples": 0.01107949495246785,
+        "Consumer Disc.": 0.0,
+        "Financials": 0.0
+      },
+      "trades": {
+        "Technology": 10,
+        "Materials": 10,
+        "Health Care": 6,
+        "Communication": 2,
+        "Utilities": 4,
+        "Energy": 4,
+        "Real Estate": 1,
+        "Consumer Staples": 2,
+        "Consumer Disc.": 0,
+        "Financials": 0
+      },
+      "win_rate": {
+        "Technology": 0.9,
+        "Materials": 0.9166666666666666,
+        "Health Care": 0.75,
+        "Communication": 1.0,
+        "Utilities": 0.8,
+        "Energy": 1.0,
+        "Real Estate": 1.0,
+        "Consumer Staples": 1.0,
+        "Consumer Disc.": 0.0,
+        "Financials": 0.0
+      },
+      "avg_ret": {
+        "Technology": 0.022875612509813553,
+        "Materials": 0.016900599731333125,
+        "Health Care": 0.011179498032156183,
+        "Communication": 0.01551114955740109,
+        "Utilities": 0.008915254534615991,
+        "Energy": 0.00874695248287487,
+        "Real Estate": 0.019890476119427708,
+        "Consumer Staples": 0.01157949495246785,
+        "Consumer Disc.": 0.0,
+        "Financials": 0.0
+      }
+    },
+    "target_perf": {
+      "net_pnl": {
+        "AMD": 0.22625612509813553,
+        "FCX": 0.2003071967759975,
+        "UNH": 0.08793598425724947,
+        "GOOGL": 0.04603344867220327,
+        "AEP": 0.04357627267307995,
+        "XOM": 0.04273476241437435,
+        "PLD": 0.039780952238855416,
+        "PG": 0.01107949495246785,
+        "AMZN": 0.0,
+        "HD": 0.0,
+        "JPM": 0.0,
+        "TSM": 0.0
+      },
+      "trades": {
+        "AMD": 10,
+        "FCX": 10,
+        "UNH": 6,
+        "GOOGL": 2,
+        "AEP": 4,
+        "XOM": 4,
+        "PLD": 1,
+        "PG": 2,
+        "AMZN": 0,
+        "HD": 0,
+        "JPM": 0,
+        "TSM": 0
+      },
+      "win_rate": {
+        "AMD": 0.9,
+        "FCX": 0.9166666666666666,
+        "UNH": 0.75,
+        "GOOGL": 1.0,
+        "AEP": 0.8,
+        "XOM": 1.0,
+        "PLD": 1.0,
+        "PG": 1.0,
+        "AMZN": 0.0,
+        "HD": 0.0,
+        "JPM": 0.0,
+        "TSM": 0.0
+      },
+      "avg_ret": {
+        "AMD": 0.022875612509813553,
+        "FCX": 0.016900599731333125,
+        "UNH": 0.011179498032156183,
+        "GOOGL": 0.01551114955740109,
+        "AEP": 0.008915254534615991,
+        "XOM": 0.00874695248287487,
+        "PLD": 0.019890476119427708,
+        "PG": 0.01157949495246785,
+        "AMZN": 0.0,
+        "HD": 0.0,
+        "JPM": 0.0,
+        "TSM": 0.0
+      }
+    },
+    "top30_features": {
+      "oh_XLK": 0.021374734118580818,
+      "oh_XLB": 0.018623827025294304,
+      "oh_XLP": 0.018314911052584648,
+      "log_residual_ewm_mean": 0.01760054938495159,
+      "rule_sma20_gt_50": 0.016023464500904083,
+      "residual_excursion_bucket": 0.014416446909308434,
+      "raw_residual_ewm_std": 0.013850443996489048,
+      "raw_residual_abs_z": 0.013799963518977165,
+      "residual_distance_from_zero": 0.013575085438787937,
+      "px_ema200_ratio_z": 0.013567897491157055,
+      "log_fib_50_hit": 0.012692484073340893,
+      "raw_residual_ewm_mean": 0.012458241544663906,
+      "sect_corr_etf": 0.01242366898804903,
+      "oh_XLV": 0.012417147867381573,
+      "raw_residual_distance_from_zero": 0.012405872344970703,
+      "raw_residual": 0.012260135263204575,
+      "shadow_price_gap_pct": 0.012212568894028664,
+      "log_residual_regime_calm": 0.012160821817815304,
+      "px_ema50_ratio_z": 0.01206985767930746,
+      "rsi_z": 0.012047450058162212,
+      "residual_abs_z": 0.012011604383587837,
+      "residual_half_life_proxy": 0.011976069770753384,
+      "px_sma50_ratio_z": 0.011898409575223923,
+      "log_residual_ewm_std": 0.011726067401468754,
+      "log_residual_distance_from_zero": 0.011686678044497967,
+      "px_sma200_ratio_z": 0.011586477048695087,
+      "raw_residual_z": 0.011511890217661858,
+      "log_residual_abs_z": 0.01146740559488535,
+      "rule_obv_trend_pos": 0.011373728513717651,
+      "log_acceleration": 0.01133789774030447
+    },
+    "family_importance": {
+      "raw": 0.19360671192407608,
+      "percent": 0.0,
+      "log": 0.19394525000825524,
+      "Return": 0.0,
+      "Other": 0.6124479647260159
+    },
+    "fibonacci": {
+      "fib_23_hit": {
+        "hit_count": 96,
+        "trade_count": 20,
+        "avg_trade_return": 0.035360211854118175,
+        "win_rate": 1.0
+      },
+      "fib_38_hit": {
+        "hit_count": 67,
+        "trade_count": 20,
+        "avg_trade_return": 0.035360211854118175,
+        "win_rate": 1.0
+      },
+      "fib_50_hit": {
+        "hit_count": 45,
+        "trade_count": 20,
+        "avg_trade_return": 0.035360211854118175,
+        "win_rate": 1.0
+      },
+      "fib_61_hit": {
+        "hit_count": 19,
+        "trade_count": 11,
+        "avg_trade_return": 0.03174828868073845,
+        "win_rate": 1.0
+      },
+      "fib_78_hit": {
+        "hit_count": 4,
+        "trade_count": 2,
+        "avg_trade_return": 0.02905647181233556,
+        "win_rate": 1.0
+      }
+    },
+    "residual_diagnostics": {
+      "log": {
+        "mean_z": 0.2745381788787703,
+        "std_z": 1.8110975904063975,
+        "pct_abs_gt_1_25": 0.32456140350877194,
+        "pct_abs_gt_1_5": 0.23684210526315788,
+        "pct_abs_gt_2": 0.12280701754385964,
+        "pct_abs_gt_3": 0.03333333333333333
+      },
+      "raw": {
+        "mean_z": 0.295010540345924,
+        "std_z": 1.8158992553941475,
+        "pct_abs_gt_1_25": 0.3385964912280702,
+        "pct_abs_gt_1_5": 0.24561403508771928,
+        "pct_abs_gt_2": 0.12456140350877193,
+        "pct_abs_gt_3": 0.03508771929824561
+      }
+    }
+  },
+  "F_PERCENT_LOG_with_return": {
+    "families": [
+      "log",
+      "percent"
+    ],
+    "include_return": true,
+    "feature_count": 124,
+    "feature_breakdown": {
+      "raw": 0,
+      "percent": 28,
+      "log": 28,
+      "return": 1
+    },
+    "classification": {
+      "accuracy": 0.9754385964912281,
+      "f1_macro": 0.9750654027114966,
+      "f1_weighted": 0.9751175152524393,
+      "confusion_matrix": [
+        [
+          84,
+          1,
+          0
+        ],
+        [
+          0,
+          346,
+          0
+        ],
+        [
+          0,
+          13,
+          126
+        ]
+      ],
+      "class_report": {
+        "0": {
+          "precision": 1.0,
+          "recall": 0.9882352941176471,
+          "f1-score": 0.9940828402366864,
+          "support": 85.0
+        },
+        "1": {
+          "precision": 0.9611111111111111,
+          "recall": 1.0,
+          "f1-score": 0.9801699716713881,
+          "support": 346.0
+        },
+        "2": {
+          "precision": 1.0,
+          "recall": 0.9064748201438849,
+          "f1-score": 0.9509433962264151,
+          "support": 139.0
+        },
+        "accuracy": 0.9754385964912281,
+        "macro avg": {
+          "precision": 0.987037037037037,
+          "recall": 0.9649033714205107,
+          "f1-score": 0.9750654027114966,
+          "support": 570.0
+        },
+        "weighted avg": {
+          "precision": 0.9763937621832359,
+          "recall": 0.9754385964912281,
+          "f1-score": 0.9751175152524393,
+          "support": 570.0
+        }
+      }
+    },
+    "backtest_metrics": {
+      "cumulative_return": 0.0748245815957489,
+      "annualized_return": 0.37576778635324426,
+      "annualized_vol": 0.03141637916450942,
+      "sharpe": 11.960887802682974,
+      "max_drawdown": -0.003131494726147821,
+      "win_rate": 0.86,
+      "n_trades": 41,
+      "avg_trade_return": 0.014662493952645477,
+      "n_long": 126,
+      "n_short": 84,
+      "n_flat": 360,
+      "buy_hold_cum": 0.11206860349797054
+    },
+    "sector_perf": {
+      "net_pnl": {
+        "Materials": 0.23208932772236435,
+        "Technology": 0.22625612509813553,
+        "Health Care": 0.08793598425724947,
+        "Communication": 0.05075127322821471,
+        "Utilities": 0.04357627267307995,
+        "Energy": 0.04273476241437435,
+        "Real Estate": 0.039780952238855416,
+        "Consumer Disc.": 0.0,
+        "Financials": 0.0,
+        "Consumer Staples": 0.0
+      },
+      "trades": {
+        "Materials": 12,
+        "Technology": 10,
+        "Health Care": 6,
+        "Communication": 4,
+        "Utilities": 4,
+        "Energy": 4,
+        "Real Estate": 1,
+        "Consumer Disc.": 0,
+        "Financials": 0,
+        "Consumer Staples": 0
+      },
+      "win_rate": {
+        "Materials": 0.8666666666666667,
+        "Technology": 0.9,
+        "Health Care": 0.75,
+        "Communication": 0.8,
+        "Utilities": 0.8,
+        "Energy": 1.0,
+        "Real Estate": 1.0,
+        "Consumer Disc.": 0.0,
+        "Financials": 0.0,
+        "Consumer Staples": 0.0
+      },
+      "avg_ret": {
+        "Materials": 0.01567262184815762,
+        "Technology": 0.022875612509813553,
+        "Health Care": 0.011179498032156183,
+        "Communication": 0.010350254645642942,
+        "Utilities": 0.008915254534615991,
+        "Energy": 0.00874695248287487,
+        "Real Estate": 0.019890476119427708,
+        "Consumer Disc.": 0.0,
+        "Financials": 0.0,
+        "Consumer Staples": 0.0
+      }
+    },
+    "target_perf": {
+      "net_pnl": {
+        "FCX": 0.23208932772236435,
+        "AMD": 0.22625612509813553,
+        "UNH": 0.08793598425724947,
+        "GOOGL": 0.05075127322821471,
+        "AEP": 0.04357627267307995,
+        "XOM": 0.04273476241437435,
+        "PLD": 0.039780952238855416,
+        "AMZN": 0.0,
+        "PG": 0.0,
+        "JPM": 0.0,
+        "HD": 0.0,
+        "TSM": 0.0
+      },
+      "trades": {
+        "FCX": 12,
+        "AMD": 10,
+        "UNH": 6,
+        "GOOGL": 4,
+        "AEP": 4,
+        "XOM": 4,
+        "PLD": 1,
+        "AMZN": 0,
+        "PG": 0,
+        "JPM": 0,
+        "HD": 0,
+        "TSM": 0
+      },
+      "win_rate": {
+        "FCX": 0.8666666666666667,
+        "AMD": 0.9,
+        "UNH": 0.75,
+        "GOOGL": 0.8,
+        "AEP": 0.8,
+        "XOM": 1.0,
+        "PLD": 1.0,
+        "AMZN": 0.0,
+        "PG": 0.0,
+        "JPM": 0.0,
+        "HD": 0.0,
+        "TSM": 0.0
+      },
+      "avg_ret": {
+        "FCX": 0.01567262184815762,
+        "AMD": 0.022875612509813553,
+        "UNH": 0.011179498032156183,
+        "GOOGL": 0.010350254645642942,
+        "AEP": 0.008915254534615991,
+        "XOM": 0.00874695248287487,
+        "PLD": 0.019890476119427708,
+        "AMZN": 0.0,
+        "PG": 0.0,
+        "JPM": 0.0,
+        "HD": 0.0,
+        "TSM": 0.0
+      }
+    },
+    "top30_features": {
+      "rule_macd_above_sig": 0.029955441132187843,
+      "oh_XLE": 0.02537623792886734,
+      "oh_XLK": 0.024525033310055733,
+      "log_residual_ewm_mean": 0.017619624733924866,
+      "log_residual": 0.017455291002988815,
+      "oh_XLP": 0.01741103082895279,
+      "oh_XLB": 0.015989771112799644,
+      "percent_residual_ewm_z": 0.015966085717082024,
+      "rule_volume_spike": 0.01449822261929512,
+      "px_ema200_ratio_z": 0.014472613111138344,
+      "percent_residual_ewm_mean": 0.01374258566647768,
+      "log_residual_regime_elevated": 0.013641337864100933,
+      "residual_distance_from_zero": 0.013228146359324455,
+      "oh_XLY": 0.01299240905791521,
+      "px_ema50_ratio_z": 0.01287679560482502,
+      "percent_residual_ewm_std": 0.01277031097561121,
+      "residual_abs_z": 0.012611595913767815,
+      "rsi_z": 0.012142348103225231,
+      "sect_corr_etf": 0.011973557993769646,
+      "shadow_price_gap_pct": 0.011965543031692505,
+      "residual_half_life_proxy": 0.0118284672498703,
+      "px_sma50_ratio_z": 0.011820705607533455,
+      "macd_signal_z": 0.011680247262120247,
+      "residual_rank": 0.011387798003852367,
+      "log_residual_abs_z": 0.011309739202260971,
+      "residual_ewm_z": 0.011304555460810661,
+      "log_residual_distance_from_zero": 0.011104725301265717,
+      "oh_XLF": 0.011038455180823803,
+      "log_days_above_1_sigma": 0.01097110565751791,
+      "rule_breakout_20": 0.010894124396145344
+    },
+    "family_importance": {
+      "raw": 0.0,
+      "percent": 0.19064247515052557,
+      "log": 0.18373274221085012,
+      "Return": 0.010475868359208107,
+      "Other": 0.6151490290649235
+    },
+    "fibonacci": {
+      "fib_23_hit": {
+        "hit_count": 96,
+        "trade_count": 21,
+        "avg_trade_return": 0.03491069988725114,
+        "win_rate": 1.0
+      },
+      "fib_38_hit": {
+        "hit_count": 67,
+        "trade_count": 21,
+        "avg_trade_return": 0.03491069988725114,
+        "win_rate": 1.0
+      },
+      "fib_50_hit": {
+        "hit_count": 45,
+        "trade_count": 21,
+        "avg_trade_return": 0.03491069988725114,
+        "win_rate": 1.0
+      },
+      "fib_61_hit": {
+        "hit_count": 19,
+        "trade_count": 12,
+        "avg_trade_return": 0.03126263633650278,
+        "win_rate": 1.0
+      },
+      "fib_78_hit": {
+        "hit_count": 4,
+        "trade_count": 2,
+        "avg_trade_return": 0.025875636614107356,
+        "win_rate": 1.0
+      }
+    },
+    "residual_diagnostics": {
+      "log": {
+        "mean_z": 0.2745381788787703,
+        "std_z": 1.8110975904063975,
+        "pct_abs_gt_1_25": 0.32456140350877194,
+        "pct_abs_gt_1_5": 0.23684210526315788,
+        "pct_abs_gt_2": 0.12280701754385964,
+        "pct_abs_gt_3": 0.03333333333333333
+      },
+      "percent": {
+        "mean_z": 0.28645490483514197,
+        "std_z": 1.800681386074996,
+        "pct_abs_gt_1_25": 0.32280701754385965,
+        "pct_abs_gt_1_5": 0.23684210526315788,
+        "pct_abs_gt_2": 0.1280701754385965,
+        "pct_abs_gt_3": 0.03859649122807018
+      }
+    }
+  },
+  "F_PERCENT_LOG_no_return": {
+    "families": [
+      "log",
+      "percent"
+    ],
+    "include_return": false,
+    "feature_count": 123,
+    "feature_breakdown": {
+      "raw": 0,
+      "percent": 28,
+      "log": 28,
+      "return": 0
+    },
+    "classification": {
+      "accuracy": 0.9736842105263158,
+      "f1_macro": 0.9726074089888774,
+      "f1_weighted": 0.9733830708223327,
+      "confusion_matrix": [
+        [
+          83,
+          2,
+          0
+        ],
+        [
+          0,
+          346,
+          0
+        ],
+        [
+          0,
+          13,
+          126
+        ]
+      ],
+      "class_report": {
+        "0": {
+          "precision": 1.0,
+          "recall": 0.9764705882352941,
+          "f1-score": 0.9880952380952381,
+          "support": 85.0
+        },
+        "1": {
+          "precision": 0.9584487534626038,
+          "recall": 1.0,
+          "f1-score": 0.9787835926449788,
+          "support": 346.0
+        },
+        "2": {
+          "precision": 1.0,
+          "recall": 0.9064748201438849,
+          "f1-score": 0.9509433962264151,
+          "support": 139.0
+        },
+        "accuracy": 0.9736842105263158,
+        "macro avg": {
+          "precision": 0.9861495844875346,
+          "recall": 0.9609818027930598,
+          "f1-score": 0.9726074089888774,
+          "support": 570.0
+        },
+        "weighted avg": {
+          "precision": 0.974777664382563,
+          "recall": 0.9736842105263158,
+          "f1-score": 0.9733830708223327,
+          "support": 570.0
+        }
+      }
+    },
+    "backtest_metrics": {
+      "cumulative_return": 0.07204806570019828,
+      "annualized_return": 0.36012499869265135,
+      "annualized_vol": 0.03122074103432226,
+      "sharpe": 11.534799840168782,
+      "max_drawdown": -0.003131494726147932,
+      "win_rate": 0.86,
+      "n_trades": 39,
+      "avg_trade_return": 0.014134263131471867,
+      "n_long": 126,
+      "n_short": 83,
+      "n_flat": 361,
+      "buy_hold_cum": 0.11206860349797054
+    },
+    "sector_perf": {
+      "net_pnl": {
+        "Technology": 0.22625612509813553,
+        "Materials": 0.1998161162672275,
+        "Health Care": 0.08793598425724947,
+        "Communication": 0.04603344867220327,
+        "Utilities": 0.04357627267307995,
+        "Energy": 0.04273476241437435,
+        "Real Estate": 0.039780952238855416,
+        "Consumer Staples": 0.01107949495246785,
+        "Consumer Disc.": 0.0,
+        "Financials": 0.0
+      },
+      "trades": {
+        "Technology": 10,
+        "Materials": 10,
+        "Health Care": 6,
+        "Communication": 2,
+        "Utilities": 4,
+        "Energy": 4,
+        "Real Estate": 1,
+        "Consumer Staples": 2,
+        "Consumer Disc.": 0,
+        "Financials": 0
+      },
+      "win_rate": {
+        "Technology": 0.9,
+        "Materials": 0.8125,
+        "Health Care": 0.75,
+        "Communication": 1.0,
+        "Utilities": 0.8,
+        "Energy": 1.0,
+        "Real Estate": 1.0,
+        "Consumer Staples": 1.0,
+        "Consumer Disc.": 0.0,
+        "Financials": 0.0
+      },
+      "avg_ret": {
+        "Technology": 0.022875612509813553,
+        "Materials": 0.01264475726670172,
+        "Health Care": 0.011179498032156183,
+        "Communication": 0.01551114955740109,
+        "Utilities": 0.008915254534615991,
+        "Energy": 0.00874695248287487,
+        "Real Estate": 0.019890476119427708,
+        "Consumer Staples": 0.01157949495246785,
+        "Consumer Disc.": 0.0,
+        "Financials": 0.0
+      }
+    },
+    "target_perf": {
+      "net_pnl": {
+        "AMD": 0.22625612509813553,
+        "FCX": 0.1998161162672275,
+        "UNH": 0.08793598425724947,
+        "GOOGL": 0.04603344867220327,
+        "AEP": 0.04357627267307995,
+        "XOM": 0.04273476241437435,
+        "PLD": 0.039780952238855416,
+        "PG": 0.01107949495246785,
+        "AMZN": 0.0,
+        "HD": 0.0,
+        "JPM": 0.0,
+        "TSM": 0.0
+      },
+      "trades": {
+        "AMD": 10,
+        "FCX": 10,
+        "UNH": 6,
+        "GOOGL": 2,
+        "AEP": 4,
+        "XOM": 4,
+        "PLD": 1,
+        "PG": 2,
+        "AMZN": 0,
+        "HD": 0,
+        "JPM": 0,
+        "TSM": 0
+      },
+      "win_rate": {
+        "AMD": 0.9,
+        "FCX": 0.8125,
+        "UNH": 0.75,
+        "GOOGL": 1.0,
+        "AEP": 0.8,
+        "XOM": 1.0,
+        "PLD": 1.0,
+        "PG": 1.0,
+        "AMZN": 0.0,
+        "HD": 0.0,
+        "JPM": 0.0,
+        "TSM": 0.0
+      },
+      "avg_ret": {
+        "AMD": 0.022875612509813553,
+        "FCX": 0.01264475726670172,
+        "UNH": 0.011179498032156183,
+        "GOOGL": 0.01551114955740109,
+        "AEP": 0.008915254534615991,
+        "XOM": 0.00874695248287487,
+        "PLD": 0.019890476119427708,
+        "PG": 0.01157949495246785,
+        "AMZN": 0.0,
+        "HD": 0.0,
+        "JPM": 0.0,
+        "TSM": 0.0
+      }
+    },
+    "top30_features": {
+      "oh_XLK": 0.023264780640602112,
+      "log_residual_ewm_mean": 0.020809225738048553,
+      "oh_XLE": 0.019030096009373665,
+      "oh_XLP": 0.018096204847097397,
+      "oh_XLB": 0.01703152433037758,
+      "rule_macd_above_sig": 0.01537889614701271,
+      "residual_excursion_bucket": 0.015314721502363682,
+      "rule_near_52w_high": 0.014777264557778835,
+      "px_ema200_ratio_z": 0.014541581273078918,
+      "residual_distance_from_zero": 0.013436514884233475,
+      "percent_residual_ewm_mean": 0.01328941248357296,
+      "log_residual_distance_from_zero": 0.013171607628464699,
+      "rsi_z": 0.0123889846727252,
+      "oh_XLU": 0.012367126531898975,
+      "residual_half_life_proxy": 0.012293604202568531,
+      "log_residual_ewm_std": 0.012174171395599842,
+      "rule_breakout_20": 0.012156671844422817,
+      "log_residual_regime_calm": 0.012015865184366703,
+      "shadow_price_gap_pct": 0.012004018761217594,
+      "residual_abs_z": 0.011993315070867538,
+      "rule_atr_high_regime": 0.011883795261383057,
+      "px_ema50_ratio_z": 0.011862888932228088,
+      "percent_residual": 0.011858444660902023,
+      "px_sma50_ratio_z": 0.011823315173387527,
+      "log_residual_abs_z": 0.011808875016868114,
+      "px_sma200_ratio_z": 0.011709857732057571,
+      "sect_corr_etf": 0.011705946177244186,
+      "log_acceleration": 0.01149101834744215,
+      "oh_XLF": 0.011365272104740143,
+      "sect_target_minus_etf": 0.011283532716333866
+    },
+    "family_importance": {
+      "raw": 0.0,
+      "percent": 0.18991418601945043,
+      "log": 0.17680584359914064,
+      "Return": 0.0,
+      "Other": 0.633279908914119
+    },
+    "fibonacci": {
+      "fib_23_hit": {
+        "hit_count": 96,
+        "trade_count": 20,
+        "avg_trade_return": 0.035335657828679666,
+        "win_rate": 1.0
+      },
+      "fib_38_hit": {
+        "hit_count": 67,
+        "trade_count": 20,
+        "avg_trade_return": 0.035335657828679666,
+        "win_rate": 1.0
+      },
+      "fib_50_hit": {
+        "hit_count": 45,
+        "trade_count": 20,
+        "avg_trade_return": 0.035335657828679666,
+        "win_rate": 1.0
+      },
+      "fib_61_hit": {
+        "hit_count": 19,
+        "trade_count": 11,
+        "avg_trade_return": 0.031703644998123,
+        "win_rate": 1.0
+      },
+      "fib_78_hit": {
+        "hit_count": 4,
+        "trade_count": 2,
+        "avg_trade_return": 0.02905647181233556,
+        "win_rate": 1.0
+      }
+    },
+    "residual_diagnostics": {
+      "log": {
+        "mean_z": 0.2745381788787703,
+        "std_z": 1.8110975904063975,
+        "pct_abs_gt_1_25": 0.32456140350877194,
+        "pct_abs_gt_1_5": 0.23684210526315788,
+        "pct_abs_gt_2": 0.12280701754385964,
+        "pct_abs_gt_3": 0.03333333333333333
+      },
+      "percent": {
+        "mean_z": 0.28645490483514197,
+        "std_z": 1.800681386074996,
+        "pct_abs_gt_1_25": 0.32280701754385965,
+        "pct_abs_gt_1_5": 0.23684210526315788,
+        "pct_abs_gt_2": 0.1280701754385965,
+        "pct_abs_gt_3": 0.03859649122807018
+      }
+    }
+  },
+  "G_ALL_with_return": {
+    "families": [
+      "log",
+      "raw",
+      "percent"
+    ],
+    "include_return": true,
+    "feature_count": 152,
+    "feature_breakdown": {
+      "raw": 28,
+      "percent": 28,
+      "log": 28,
+      "return": 1
+    },
+    "classification": {
+      "accuracy": 0.980701754385965,
+      "f1_macro": 0.9803740604091079,
+      "f1_weighted": 0.9805202350875327,
+      "confusion_matrix": [
+        [
+          84,
+          1,
+          0
+        ],
+        [
+          0,
+          346,
+          0
+        ],
+        [
+          0,
+          10,
+          129
+        ]
+      ],
+      "class_report": {
+        "0": {
+          "precision": 1.0,
+          "recall": 0.9882352941176471,
+          "f1-score": 0.9940828402366864,
+          "support": 85.0
+        },
+        "1": {
+          "precision": 0.969187675070028,
+          "recall": 1.0,
+          "f1-score": 0.984352773826458,
+          "support": 346.0
+        },
+        "2": {
+          "precision": 1.0,
+          "recall": 0.9280575539568345,
+          "f1-score": 0.9626865671641791,
+          "support": 139.0
+        },
+        "accuracy": 0.980701754385965,
+        "macro avg": {
+          "precision": 0.9897292250233427,
+          "recall": 0.9720976160248272,
+          "f1-score": 0.9803740604091079,
+          "support": 570.0
+        },
+        "weighted avg": {
+          "precision": 0.981296378200403,
+          "recall": 0.980701754385965,
+          "f1-score": 0.9805202350875327,
+          "support": 570.0
+        }
+      }
+    },
+    "backtest_metrics": {
+      "cumulative_return": 0.07601218414577726,
+      "annualized_return": 0.3825010423715134,
+      "annualized_vol": 0.03173393012004137,
+      "sharpe": 12.053377596932034,
+      "max_drawdown": -0.003131494726147821,
+      "win_rate": 0.8627450980392157,
+      "n_trades": 43,
+      "avg_trade_return": 0.014602042991857678,
+      "n_long": 129,
+      "n_short": 84,
+      "n_flat": 357,
+      "buy_hold_cum": 0.11206860349797054
+    },
+    "sector_perf": {
+      "net_pnl": {
+        "Materials": 0.23208932772236435,
+        "Technology": 0.22625612509813553,
+        "Health Care": 0.08793598425724947,
+        "Communication": 0.05075127322821471,
+        "Utilities": 0.04357627267307995,
+        "Energy": 0.04273476241437435,
+        "Real Estate": 0.039780952238855416,
+        "Consumer Staples": 0.01107949495246785,
+        "Consumer Disc.": 0.0,
+        "Financials": 0.0
+      },
+      "trades": {
+        "Materials": 12,
+        "Technology": 10,
+        "Health Care": 6,
+        "Communication": 4,
+        "Utilities": 4,
+        "Energy": 4,
+        "Real Estate": 1,
+        "Consumer Staples": 2,
+        "Consumer Disc.": 0,
+        "Financials": 0
+      },
+      "win_rate": {
+        "Materials": 0.8666666666666667,
+        "Technology": 0.9,
+        "Health Care": 0.75,
+        "Communication": 0.8,
+        "Utilities": 0.8,
+        "Energy": 1.0,
+        "Real Estate": 1.0,
+        "Consumer Staples": 1.0,
+        "Consumer Disc.": 0.0,
+        "Financials": 0.0
+      },
+      "avg_ret": {
+        "Materials": 0.01567262184815762,
+        "Technology": 0.022875612509813553,
+        "Health Care": 0.011179498032156183,
+        "Communication": 0.010350254645642942,
+        "Utilities": 0.008915254534615991,
+        "Energy": 0.00874695248287487,
+        "Real Estate": 0.019890476119427708,
+        "Consumer Staples": 0.01157949495246785,
+        "Consumer Disc.": 0.0,
+        "Financials": 0.0
+      }
+    },
+    "target_perf": {
+      "net_pnl": {
+        "FCX": 0.23208932772236435,
+        "AMD": 0.22625612509813553,
+        "UNH": 0.08793598425724947,
+        "GOOGL": 0.05075127322821471,
+        "AEP": 0.04357627267307995,
+        "XOM": 0.04273476241437435,
+        "PLD": 0.039780952238855416,
+        "PG": 0.01107949495246785,
+        "AMZN": 0.0,
+        "HD": 0.0,
+        "JPM": 0.0,
+        "TSM": 0.0
+      },
+      "trades": {
+        "FCX": 12,
+        "AMD": 10,
+        "UNH": 6,
+        "GOOGL": 4,
+        "AEP": 4,
+        "XOM": 4,
+        "PLD": 1,
+        "PG": 2,
+        "AMZN": 0,
+        "HD": 0,
+        "JPM": 0,
+        "TSM": 0
+      },
+      "win_rate": {
+        "FCX": 0.8666666666666667,
+        "AMD": 0.9,
+        "UNH": 0.75,
+        "GOOGL": 0.8,
+        "AEP": 0.8,
+        "XOM": 1.0,
+        "PLD": 1.0,
+        "PG": 1.0,
+        "AMZN": 0.0,
+        "HD": 0.0,
+        "JPM": 0.0,
+        "TSM": 0.0
+      },
+      "avg_ret": {
+        "FCX": 0.01567262184815762,
+        "AMD": 0.022875612509813553,
+        "UNH": 0.011179498032156183,
+        "GOOGL": 0.010350254645642942,
+        "AEP": 0.008915254534615991,
+        "XOM": 0.00874695248287487,
+        "PLD": 0.019890476119427708,
+        "PG": 0.01157949495246785,
+        "AMZN": 0.0,
+        "HD": 0.0,
+        "JPM": 0.0,
+        "TSM": 0.0
+      }
+    },
+    "top30_features": {
+      "log_residual": 0.024021703749895096,
+      "oh_XLK": 0.019922416657209396,
+      "log_residual_ewm_mean": 0.01761293224990368,
+      "oh_XLP": 0.016107207164168358,
+      "raw_residual_distance_from_zero": 0.015113194473087788,
+      "percent_residual_ewm_mean": 0.0132110845297575,
+      "raw_residual_z": 0.012870059348642826,
+      "raw_residual_ewm_std": 0.012803655117750168,
+      "residual_distance_from_zero": 0.012650461867451668,
+      "oh_XLB": 0.01256515271961689,
+      "raw_residual_rank": 0.012084311805665493,
+      "percent_residual": 0.011961733922362328,
+      "log_residual_regime_calm": 0.011942948214709759,
+      "px_ema200_ratio_z": 0.011678268201649189,
+      "raw_residual_ewm_mean": 0.01132185384631157,
+      "percent_residual_ewm_z": 0.011201499961316586,
+      "percent_residual_regime_elevated": 0.010995849035680294,
+      "px_sma200_ratio_z": 0.01099339872598648,
+      "residual_abs_z": 0.010935867205262184,
+      "raw_residual": 0.010862690396606922,
+      "rsi_z": 0.01083965040743351,
+      "raw_residual_abs_z": 0.010789097286760807,
+      "residual_ewm_z": 0.010734476149082184,
+      "px_sma50_ratio_z": 0.010630235075950623,
+      "log_acceleration": 0.010597411543130875,
+      "shadow_price_gap_pct": 0.01057666540145874,
+      "sect_corr_etf": 0.010482978075742722,
+      "log_residual_ewm_std": 0.010454182513058186,
+      "sect_target_minus_etf": 0.010447722859680653,
+      "px_ema20_ratio_z": 0.010440031997859478
+    },
+    "family_importance": {
+      "raw": 0.1888360963203013,
+      "percent": 0.16413570707663894,
+      "log": 0.16442510532215238,
+      "Return": 0.009761850349605083,
+      "Other": 0.4728413017001003
+    },
+    "fibonacci": {
+      "fib_23_hit": {
+        "hit_count": 96,
+        "trade_count": 22,
+        "avg_trade_return": 0.033850190572033714,
+        "win_rate": 1.0
+      },
+      "fib_38_hit": {
+        "hit_count": 67,
+        "trade_count": 22,
+        "avg_trade_return": 0.033850190572033714,
+        "win_rate": 1.0
+      },
+      "fib_50_hit": {
+        "hit_count": 45,
+        "trade_count": 22,
+        "avg_trade_return": 0.033850190572033714,
+        "win_rate": 1.0
+      },
+      "fib_61_hit": {
+        "hit_count": 19,
+        "trade_count": 13,
+        "avg_trade_return": 0.029748548537730863,
+        "win_rate": 1.0
+      },
+      "fib_78_hit": {
+        "hit_count": 4,
+        "trade_count": 3,
+        "avg_trade_return": 0.021110256060227522,
+        "win_rate": 1.0
+      }
+    },
+    "residual_diagnostics": {
+      "log": {
+        "mean_z": 0.2745381788787703,
+        "std_z": 1.8110975904063975,
+        "pct_abs_gt_1_25": 0.32456140350877194,
+        "pct_abs_gt_1_5": 0.23684210526315788,
+        "pct_abs_gt_2": 0.12280701754385964,
+        "pct_abs_gt_3": 0.03333333333333333
+      },
+      "raw": {
+        "mean_z": 0.295010540345924,
+        "std_z": 1.8158992553941475,
+        "pct_abs_gt_1_25": 0.3385964912280702,
+        "pct_abs_gt_1_5": 0.24561403508771928,
+        "pct_abs_gt_2": 0.12456140350877193,
+        "pct_abs_gt_3": 0.03508771929824561
+      },
+      "percent": {
+        "mean_z": 0.28645490483514197,
+        "std_z": 1.800681386074996,
+        "pct_abs_gt_1_25": 0.32280701754385965,
+        "pct_abs_gt_1_5": 0.23684210526315788,
+        "pct_abs_gt_2": 0.1280701754385965,
+        "pct_abs_gt_3": 0.03859649122807018
+      }
+    }
+  },
+  "G_ALL_no_return": {
+    "families": [
+      "log",
+      "raw",
+      "percent"
+    ],
+    "include_return": false,
+    "feature_count": 151,
+    "feature_breakdown": {
+      "raw": 28,
+      "percent": 28,
+      "log": 28,
+      "return": 0
+    },
+    "classification": {
+      "accuracy": 0.9771929824561404,
+      "f1_macro": 0.9761523399701741,
+      "f1_weighted": 0.9769848449716211,
+      "confusion_matrix": [
+        [
+          83,
+          2,
+          0
+        ],
+        [
+          0,
+          346,
+          0
+        ],
+        [
+          0,
+          11,
+          128
+        ]
+      ],
+      "class_report": {
+        "0": {
+          "precision": 1.0,
+          "recall": 0.9764705882352941,
+          "f1-score": 0.9880952380952381,
+          "support": 85.0
+        },
+        "1": {
+          "precision": 0.9637883008356546,
+          "recall": 1.0,
+          "f1-score": 0.9815602836879432,
+          "support": 346.0
+        },
+        "2": {
+          "precision": 1.0,
+          "recall": 0.920863309352518,
+          "f1-score": 0.9588014981273408,
+          "support": 139.0
+        },
+        "accuracy": 0.9771929824561404,
+        "macro avg": {
+          "precision": 0.9879294336118849,
+          "recall": 0.9657779658626041,
+          "f1-score": 0.9761523399701741,
+          "support": 570.0
+        },
+        "weighted avg": {
+          "precision": 0.9780188633142747,
+          "recall": 0.9771929824561404,
+          "f1-score": 0.9769848449716211,
+          "support": 570.0
+        }
+      }
+    },
+    "backtest_metrics": {
+      "cumulative_return": 0.06972769752830654,
+      "annualized_return": 0.34715801120677137,
+      "annualized_vol": 0.03163647313757823,
+      "sharpe": 10.973347430261194,
+      "max_drawdown": -0.003131494726147932,
+      "win_rate": 0.8571428571428571,
+      "n_trades": 38,
+      "avg_trade_return": 0.013970373227467504,
+      "n_long": 128,
+      "n_short": 83,
+      "n_flat": 359,
+      "buy_hold_cum": 0.11206860349797054
+    },
+    "sector_perf": {
+      "net_pnl": {
+        "Technology": 0.22625612509813553,
+        "Materials": 0.16803398532086067,
+        "Health Care": 0.08793598425724947,
+        "Communication": 0.04603344867220327,
+        "Utilities": 0.04357627267307995,
+        "Energy": 0.04273476241437435,
+        "Real Estate": 0.039780952238855416,
+        "Consumer Staples": 0.021196757471149075,
+        "Consumer Disc.": 0.0,
+        "Financials": 0.0
+      },
+      "trades": {
+        "Technology": 10,
+        "Materials": 8,
+        "Health Care": 6,
+        "Communication": 2,
+        "Utilities": 4,
+        "Energy": 4,
+        "Real Estate": 1,
+        "Consumer Staples": 3,
+        "Consumer Disc.": 0,
+        "Financials": 0
+      },
+      "win_rate": {
+        "Technology": 0.9,
+        "Materials": 0.8461538461538461,
+        "Health Care": 0.75,
+        "Communication": 1.0,
+        "Utilities": 0.8,
+        "Energy": 1.0,
+        "Real Estate": 1.0,
+        "Consumer Staples": 0.6666666666666666,
+        "Consumer Disc.": 0.0,
+        "Financials": 0.0
+      },
+      "avg_ret": {
+        "Technology": 0.022875612509813553,
+        "Materials": 0.013079537332373898,
+        "Health Care": 0.011179498032156183,
+        "Communication": 0.01551114955740109,
+        "Utilities": 0.008915254534615991,
+        "Energy": 0.00874695248287487,
+        "Real Estate": 0.019890476119427708,
+        "Consumer Staples": 0.007232252490383025,
+        "Consumer Disc.": 0.0,
+        "Financials": 0.0
+      }
+    },
+    "target_perf": {
+      "net_pnl": {
+        "AMD": 0.22625612509813553,
+        "FCX": 0.16803398532086067,
+        "UNH": 0.08793598425724947,
+        "GOOGL": 0.04603344867220327,
+        "AEP": 0.04357627267307995,
+        "XOM": 0.04273476241437435,
+        "PLD": 0.039780952238855416,
+        "PG": 0.021196757471149075,
+        "AMZN": 0.0,
+        "HD": 0.0,
+        "JPM": 0.0,
+        "TSM": 0.0
+      },
+      "trades": {
+        "AMD": 10,
+        "FCX": 8,
+        "UNH": 6,
+        "GOOGL": 2,
+        "AEP": 4,
+        "XOM": 4,
+        "PLD": 1,
+        "PG": 3,
+        "AMZN": 0,
+        "HD": 0,
+        "JPM": 0,
+        "TSM": 0
+      },
+      "win_rate": {
+        "AMD": 0.9,
+        "FCX": 0.8461538461538461,
+        "UNH": 0.75,
+        "GOOGL": 1.0,
+        "AEP": 0.8,
+        "XOM": 1.0,
+        "PLD": 1.0,
+        "PG": 0.6666666666666666,
+        "AMZN": 0.0,
+        "HD": 0.0,
+        "JPM": 0.0,
+        "TSM": 0.0
+      },
+      "avg_ret": {
+        "AMD": 0.022875612509813553,
+        "FCX": 0.013079537332373898,
+        "UNH": 0.011179498032156183,
+        "GOOGL": 0.01551114955740109,
+        "AEP": 0.008915254534615991,
+        "XOM": 0.00874695248287487,
+        "PLD": 0.019890476119427708,
+        "PG": 0.007232252490383025,
+        "AMZN": 0.0,
+        "HD": 0.0,
+        "JPM": 0.0,
+        "TSM": 0.0
+      }
+    },
+    "top30_features": {
+      "rule_px_gt_sma20": 0.02761017344892025,
+      "percent_residual_rank": 0.025717973709106445,
+      "oh_XLK": 0.01976337470114231,
+      "log_residual_ewm_mean": 0.016741959378123283,
+      "oh_XLP": 0.01599656417965889,
+      "log_residual": 0.014451983384788036,
+      "raw_residual_abs_z": 0.012568659149110317,
+      "oh_XLB": 0.012355969287455082,
+      "residual_distance_from_zero": 0.012288897298276424,
+      "percent_residual_ewm_mean": 0.011720430105924606,
+      "percent_fib_retrace_pct": 0.011691078543663025,
+      "oh_XLE": 0.011604242958128452,
+      "px_ema200_ratio_z": 0.011475689709186554,
+      "log_residual_regime_normal": 0.01145397499203682,
+      "percent_residual_ewm_std": 0.011240334250032902,
+      "raw_residual_ewm_std": 0.011080130003392696,
+      "residual_half_life_proxy": 0.011001692153513432,
+      "oh_XLY": 0.010976243764162064,
+      "log_residual_distance_from_zero": 0.010957833379507065,
+      "log_residual_abs_z": 0.01094415970146656,
+      "px_ema50_ratio_z": 0.010849326848983765,
+      "oh_XLF": 0.010810794308781624,
+      "raw_residual_distance_from_zero": 0.01079196110367775,
+      "rule_sma50_gt_200": 0.010623518377542496,
+      "residual_abs_z": 0.010618671774864197,
+      "log_acceleration": 0.010510467924177647,
+      "raw_residual_rank": 0.010490360669791698,
+      "percent_distance_from_peak": 0.01035700086504221,
+      "px_sma200_ratio_z": 0.010152732022106647,
+      "rule_near_52w_high": 0.010118159465491772
+    },
+    "family_importance": {
+      "raw": 0.15396461309865117,
+      "percent": 0.17257806053385139,
+      "log": 0.15467097470536828,
+      "Return": 0.0,
+      "Other": 0.5187864387407899
+    },
+    "fibonacci": {
+      "fib_23_hit": {
+        "hit_count": 96,
+        "trade_count": 20,
+        "avg_trade_return": 0.03422741440729539,
+        "win_rate": 1.0
+      },
+      "fib_38_hit": {
+        "hit_count": 67,
+        "trade_count": 20,
+        "avg_trade_return": 0.03422741440729539,
+        "win_rate": 1.0
+      },
+      "fib_50_hit": {
+        "hit_count": 45,
+        "trade_count": 20,
+        "avg_trade_return": 0.03422741440729539,
+        "win_rate": 1.0
+      },
+      "fib_61_hit": {
+        "hit_count": 19,
+        "trade_count": 11,
+        "avg_trade_return": 0.029688656959242485,
+        "win_rate": 1.0
+      },
+      "fib_78_hit": {
+        "hit_count": 4,
+        "trade_count": 3,
+        "avg_trade_return": 0.022743402047784116,
+        "win_rate": 1.0
+      }
+    },
+    "residual_diagnostics": {
+      "log": {
+        "mean_z": 0.2745381788787703,
+        "std_z": 1.8110975904063975,
+        "pct_abs_gt_1_25": 0.32456140350877194,
+        "pct_abs_gt_1_5": 0.23684210526315788,
+        "pct_abs_gt_2": 0.12280701754385964,
+        "pct_abs_gt_3": 0.03333333333333333
+      },
+      "raw": {
+        "mean_z": 0.295010540345924,
+        "std_z": 1.8158992553941475,
+        "pct_abs_gt_1_25": 0.3385964912280702,
+        "pct_abs_gt_1_5": 0.24561403508771928,
+        "pct_abs_gt_2": 0.12456140350877193,
+        "pct_abs_gt_3": 0.03508771929824561
+      },
+      "percent": {
+        "mean_z": 0.28645490483514197,
+        "std_z": 1.800681386074996,
+        "pct_abs_gt_1_25": 0.32280701754385965,
+        "pct_abs_gt_1_5": 0.23684210526315788,
+        "pct_abs_gt_2": 0.1280701754385965,
+        "pct_abs_gt_3": 0.03859649122807018
+      }
+    }
+  }
+}
