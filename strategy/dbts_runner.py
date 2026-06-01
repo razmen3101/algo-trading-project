@@ -30,23 +30,18 @@ class DBTSRunner:
         self.bandit = BanditTargetSelector(cfg)
         self.logs = []
 
-    def run(self):
+    def run(self, eval_split=None):
         print("[dbts] stage=load_data")
         md = self.pipeline.load_data()
         print("[dbts] stage=split")
         split = chrono_split(md.prices.index, self.cfg)
-        # build panel and train classifier on dev (train+val)
-        from strategy.splits import walk_forward_folds
-        folds = walk_forward_folds(md.prices.index, self.cfg)
-        print(f"[dbts] stage=train_panel folds={len(folds)}")
-        panel = self.pipeline.build_panel(md, folds, split)
-        print("[dbts] stage=train_classifier")
-        clf, test_df, feature_cols, res = self.pipeline.train_classifier(panel, split)
+        # Train-only fit for DBTS candidate models; validation stays reserved.
+        dev_idx = split.train_idx
+        print("[dbts] split_usage: train_only_for_dbts_models=True")
+        print(f"[dbts] split_usage: train_days={len(split.train_idx)} val_days={len(split.val_idx)} test_days={len(split.test_idx)}")
+        print("[dbts] split_usage: validation_reserved_for_future_hyperparameter_tuning_only")
 
-        # prepare dev index (train+val)
-        dev_idx = split.train_idx.union(split.val_idx)
-
-        # fit per-sector per-candidate models on dev
+        # Fit per-sector per-candidate models on train-only history.
         model_store = {}
         completed_candidates = 0
         for etf, cfg_sector in SECTORS.items():
@@ -80,6 +75,27 @@ class DBTSRunner:
                 print(f"[dbts]   candidate={cand} status=fit_done completed_candidates={completed_candidates}")
             # init bandit state
             self.bandit.init_sector(sector_name, members)
+
+        if eval_split is None:
+            print("[dbts] eval_split=None -> train-only preparation complete; evaluation disabled.")
+            print(f"[dbts] prepared_models={completed_candidates}")
+            return dict(
+                market_data=md,
+                split=split,
+                prepared_models=model_store,
+                completed_candidates=completed_candidates,
+                eval_split=None,
+            )
+
+        if eval_split != "test":
+            raise ValueError(f"Unsupported eval_split={eval_split!r}; expected None or 'test'.")
+
+        from strategy.splits import walk_forward_folds
+        folds = walk_forward_folds(md.prices.index, self.cfg)
+        print(f"[dbts] stage=train_panel folds={len(folds)}")
+        panel = self.pipeline.build_panel(md, folds, split)
+        print("[dbts] stage=train_classifier")
+        clf, test_df, feature_cols, res = self.pipeline.train_classifier(panel, split)
 
         # iterate test dates
         test_dates = list(split.test_idx)
@@ -241,11 +257,11 @@ class DBTSRunner:
         print(f"[dbts] invalid_price_rows={invalid_price_rows} invalid_log_rows={invalid_log_rows}")
 
 
-def main():
+def main(eval_split=None):
     from strategy.strategy_config import StrategyConfig
     cfg = StrategyConfig()
     r = DBTSRunner(cfg)
-    r.run()
+    return r.run(eval_split=eval_split)
 
 
 if __name__ == '__main__':

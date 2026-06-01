@@ -99,7 +99,7 @@ class Backtester:
         if position_manager is None:
             df = self._positions(panel)
         else:
-            df = position_manager.manage(panel)
+            df = position_manager.simulate(panel)
         df = df.sort_values(["target", "date"]).reset_index(drop=True)
         cost = self.cfg.transaction_cost_bps / 1e4
 
