@@ -107,7 +107,10 @@ def _variance_stability(series: pd.Series) -> float:
     b = float(second.std(ddof=0))
     if a == 0 or b == 0 or not np.isfinite(a) or not np.isfinite(b):
         return 0.0
-    return _clip01(1.0 - abs(np.log(a / b)) / 3.0)
+    ratio = a / b
+    if ratio <= 0 or not np.isfinite(ratio):
+        return 0.0
+    return _clip01(1.0 - abs(np.log(ratio)) / 3.0)
 
 
 def _regime_stability(abs_z: pd.Series) -> float:
@@ -282,6 +285,7 @@ class TargetSelectionEngine:
     def _candidate_frame(self, etf: str, sector_name: str, members: list[str], prices: pd.DataFrame,
                          returns: pd.DataFrame, volumes: pd.DataFrame, etf_returns: pd.Series | None,
                          train_idx, predict_idx=None, split=None) -> tuple[pd.DataFrame, dict[str, list[str]]]:
+        print(f"[target-select] stage=candidate_frame sector={sector_name} retrain_date={pd.Index(predict_idx)[0].date() if predict_idx is not None and len(pd.Index(predict_idx)) else 'n/a'} candidates={len(members)}")
         train_prices = prices.loc[pd.Index(train_idx)]
         train_returns = returns.reindex(train_idx)
         train_volumes = volumes.loc[pd.Index(train_idx)]
@@ -290,10 +294,13 @@ class TargetSelectionEngine:
 
         rows: list[dict] = []
         predictor_map: dict[str, list[str]] = {}
+        completed_candidates = 0
         for cand in [m for m in members if m in train_prices.columns]:
+            print(f"[target-select]   sector={sector_name} candidate={cand} status=score_start completed_candidates={completed_candidates}")
             p = train_prices[cand].dropna()
             r = train_returns[cand].dropna() if cand in train_returns.columns else pd.Series(dtype=float)
             if len(p) < self.cfg.target_min_history:
+                print(f"[target-select]   sector={sector_name} candidate={cand} status=skip_short_history")
                 continue
 
             peers = [m for m in members if m != cand and m in train_prices.columns]
@@ -306,6 +313,7 @@ class TargetSelectionEngine:
             return_model = DynamicReturnModel(self.cfg)
             return_feats, _, safe_return_idx = return_model.fit(prices, cand, preds, train_idx)
             if len(safe_train_idx) == 0 or len(safe_return_idx) == 0:
+                print(f"[target-select]   sector={sector_name} candidate={cand} status=skip_no_train_data")
                 continue
 
             train_shadow = shadow_model.predict(shadow_feats, train_idx, base_target_price)
@@ -359,6 +367,8 @@ class TargetSelectionEngine:
             row.update(train_metrics)
             row.update({f"future_{k}": v for k, v in future_metrics.items()})
             rows.append(row)
+            completed_candidates += 1
+            print(f"[target-select]   sector={sector_name} candidate={cand} status=score_done completed_candidates={completed_candidates}")
 
         scores = pd.DataFrame(rows)
         if scores.empty:
@@ -466,6 +476,7 @@ class TargetSelectionEngine:
                volumes: pd.DataFrame, etf_returns: pd.Series | None,
                train_idx, predict_idx=None, split=None) -> TargetChoice:
         if self.mode == "legacy":
+            print(f"[target-select] stage=legacy sector={sector_name}")
             legacy_choice = self._legacy.select(etf, sector_name, members, prices.loc[pd.Index(train_idx)], returns.reindex(train_idx), volumes.loc[pd.Index(train_idx)], None if etf_returns is None else etf_returns.reindex(train_idx))
             return TargetChoice(
                 etf=legacy_choice.etf,
@@ -482,6 +493,7 @@ class TargetSelectionEngine:
 
         scores, predictor_map = self._candidate_frame(etf, sector_name, members, prices, returns, volumes, etf_returns, train_idx, predict_idx, split)
         if scores.empty:
+            print(f"[target-select] sector={sector_name} fallback=legacy_due_to_empty_scores")
             fallback = self._legacy.select(etf, sector_name, members, prices.loc[pd.Index(train_idx)], returns.reindex(train_idx), volumes.loc[pd.Index(train_idx)], None if etf_returns is None else etf_returns.reindex(train_idx))
             return TargetChoice(
                 etf=fallback.etf,
@@ -499,6 +511,7 @@ class TargetSelectionEngine:
         select_col = "meta_prediction" if self.mode == "meta_target" and scores["meta_prediction"].notna().any() else "tradability_score"
         selected_row = scores[select_col].astype(float).idxmax()
         selected_idx = str(scores.loc[selected_row, "candidate"])
+        print(f"[target-select] sector={sector_name} selected={selected_idx} select_col={select_col}")
         state = self._states.get(sector_name)
         choice = TargetChoice(
             etf=etf,

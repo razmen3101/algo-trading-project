@@ -27,6 +27,12 @@ def ewm_z(s: pd.Series, span: int):
     return mean, std, z
 
 
+def _safe_log_series(s: pd.Series) -> pd.Series:
+    x = pd.to_numeric(s, errors="coerce").astype(float)
+    x = x.where(x > 0)
+    return np.log(x)
+
+
 def rolling_percentile_shifted(s: pd.Series, win: int) -> pd.Series:
     return s.rolling(win).apply(
         lambda w: (w[:-1] < w[-1]).mean() if len(w) > 1 else np.nan, raw=True
@@ -163,10 +169,11 @@ class ResidualFeatureBuilder:
         self.cfg = cfg
 
     def _residual_series(self, price: pd.Series, shadow_price: pd.Series) -> pd.DataFrame:
-        shadow_safe = shadow_price.replace(0, np.nan)
-        raw_residual = (price - shadow_price).rename("raw_residual")
-        pct_residual = ((price - shadow_price) / shadow_safe).rename("percent_residual")
-        log_residual = np.log(price / shadow_safe).rename("log_residual")
+        price_safe = pd.to_numeric(price, errors="coerce").astype(float).where(lambda s: s > 0)
+        shadow_safe = pd.to_numeric(shadow_price, errors="coerce").astype(float).where(lambda s: s > 0)
+        raw_residual = (price_safe - shadow_safe).rename("raw_residual")
+        pct_residual = ((price_safe - shadow_safe) / shadow_safe).rename("percent_residual")
+        log_residual = (_safe_log_series(price_safe) - _safe_log_series(shadow_safe)).rename("log_residual")
 
         residual_type = getattr(self.cfg, "residual_type", "raw")
         if residual_type == "percent":
@@ -186,7 +193,9 @@ class ResidualFeatureBuilder:
 
         residual_df = self._residual_series(price, shadow_price)
         residual = residual_df["price_residual"]
-        gap = (price / shadow_price - 1.0).rename("shadow_price_gap_pct")
+        price_safe = pd.to_numeric(price, errors="coerce").astype(float).where(lambda s: s > 0)
+        shadow_safe = pd.to_numeric(shadow_price, errors="coerce").astype(float).where(lambda s: s > 0)
+        gap = (price_safe / shadow_safe - 1.0).rename("shadow_price_gap_pct")
 
         r_mean, r_std, r_z = ewm_z(residual, span)
         # rolling stats (shifted) as a complement to EWM
@@ -206,11 +215,13 @@ class ResidualFeatureBuilder:
         residual_pct = roll_rank.rename("residual_percentile")
         residual_ewm_slope = r_z.diff().rename("residual_ewm_slope")
         lag1 = lag1_autocorr_shifted(residual, win)
+        lag1 = lag1.where((lag1 > 0) & (lag1 < 1))
         residual_half_life_proxy = pd.Series(
-            np.where((lag1 > 0) & (lag1 < 1), -np.log(2.0) / np.log(lag1), np.nan),
+            -np.log(2.0) / np.log(lag1),
             index=residual.index,
             name="residual_half_life_proxy",
         )
+        residual_half_life_proxy = residual_half_life_proxy.where(np.isfinite(residual_half_life_proxy))
         residual_excursion_bucket = pd.cut(
             residual_abs_z,
             bins=[-np.inf, 1.0, 1.5, 2.0, 3.0, np.inf],

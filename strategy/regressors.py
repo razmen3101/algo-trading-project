@@ -22,6 +22,22 @@ from xgboost import XGBRegressor
 from sklearn.metrics import r2_score
 
 
+def _safe_log_ratio(numer: pd.Series, denom: float | pd.Series) -> pd.Series:
+    numer_s = pd.to_numeric(numer, errors="coerce").astype(float)
+    numer_s = numer_s.where(numer_s > 0)
+    if np.isscalar(denom):
+        denom_f = float(denom)
+        if not np.isfinite(denom_f) or denom_f <= 0:
+            return pd.Series(np.nan, index=numer_s.index, dtype=float)
+        ratio = numer_s / denom_f
+    else:
+        denom_s = pd.to_numeric(denom, errors="coerce").astype(float)
+        denom_s = denom_s.where(denom_s > 0)
+        ratio = numer_s / denom_s
+    ratio = ratio.where(ratio > 0)
+    return np.log(ratio)
+
+
 def _feature_frame(prices: pd.DataFrame, predictors: list[str],
                    with_returns: bool) -> pd.DataFrame:
     """Build a leakage-free feature frame from predictor PRICES (+ optional
@@ -83,20 +99,24 @@ class DynamicShadowPriceModel:
         if len(idx) == 0:
             return pd.DataFrame(index=prices.index), pd.Series(dtype=float), float("nan")
 
-        target_base = prices[target].reindex(idx).dropna()
+        target_series = pd.to_numeric(prices[target], errors="coerce").astype(float)
+        target_series = target_series.where(target_series > 0)
+        target_base = target_series.reindex(idx).dropna()
         if target_base.empty:
             return pd.DataFrame(index=prices.index), pd.Series(dtype=float), float("nan")
 
         base_target_price = float(target_base.iloc[0])
-        y = np.log(prices[target] / base_target_price).rename("_y")
+        y = _safe_log_ratio(target_series, base_target_price).rename("_y")
 
         feats = {}
         for pred in predictors:
-            pred_base = prices[pred].reindex(idx).dropna()
+            pred_series = pd.to_numeric(prices[pred], errors="coerce").astype(float)
+            pred_series = pred_series.where(pred_series > 0)
+            pred_base = pred_series.reindex(idx).dropna()
             if pred_base.empty:
                 continue
             base_pred_price = float(pred_base.iloc[0])
-            feats[f"px_{pred}"] = np.log(prices[pred] / base_pred_price)
+            feats[f"px_{pred}"] = _safe_log_ratio(pred_series, base_pred_price)
         return pd.DataFrame(feats, index=prices.index), y, base_target_price
 
     def fit_predict(self, prices: pd.DataFrame, target: str, predictors: list[str],

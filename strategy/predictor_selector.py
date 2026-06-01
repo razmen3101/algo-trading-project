@@ -71,10 +71,14 @@ class PredictorSelector:
             if prices is None:
                 return None
             cols = [target] + [c for c in candidates if c in prices.columns and c != target]
-            data = prices[cols].dropna()
+            data = prices[cols].apply(pd.to_numeric, errors="coerce").astype(float)
+            data = data.where(data > 0).dropna()
             if len(data) < 60 or len(cols) <= 1:
                 return None
-            return np.log(data / data.iloc[0])
+            base = data.iloc[0].where(data.iloc[0] > 0)
+            ratio = data.divide(base)
+            ratio = ratio.where(ratio > 0)
+            return np.log(ratio)
 
         cands = [c for c in candidates if c in returns.columns and c != target]
         data = returns[[target] + cands].dropna()
