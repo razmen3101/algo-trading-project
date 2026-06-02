@@ -163,7 +163,11 @@ print("[TEST] Building position manager and running backtest...")
 position_manager = build_position_manager(cfg)
 backtester = Backtester(cfg)
 result = backtester.run(audit_panel, position_manager=position_manager)
-completed_trades = summarize_completed_trades(result.trades).sort_values(["entry_date", "sector", "target"]).reset_index(drop=True)
+completed_trades = summarize_completed_trades(result.trades)
+if len(completed_trades) > 0:
+    completed_trades = completed_trades.sort_values(["entry_date", "sector", "target"]).reset_index(drop=True)
+else:
+    completed_trades = completed_trades.reset_index(drop=True)
 
 portfolio = result.portfolio.copy()
 portfolio["drawdown"] = portfolio["equity"] / portfolio["equity"].cummax() - 1.0
