@@ -18,6 +18,7 @@ import numpy as np
 import pandas as pd
 from xgboost import XGBClassifier
 from sklearn.metrics import f1_score, accuracy_score
+from sklearn.utils.class_weight import compute_sample_weight
 
 # external label <-> xgboost class index
 _TO_IDX = {-1: 0, 0: 1, 1: 2}
@@ -87,12 +88,14 @@ class GlobalSignalClassifier:
         self.features_ = list(X_tr.columns)
         ytr_i = y_tr.map(_TO_IDX).astype(int)
         yval_i = y_val.map(_TO_IDX).astype(int)
+        use_bal = bool(getattr(self.cfg, "use_class_balanced_weights", False))
+        sw_tr = compute_sample_weight(class_weight="balanced", y=ytr_i) if use_bal else None
 
         if self.cfg.use_random_search:
             best, best_params, best_metrics = -np.inf, None, None
             for params in self._param_grid():
                 m = self._new_model(params)
-                m.fit(X_tr, ytr_i)
+                m.fit(X_tr, ytr_i, sample_weight=sw_tr)
                 metrics = self._score(m, X_val, yval_i)
                 if metrics["f1_macro"] > best:
                     best, best_params, best_metrics = metrics["f1_macro"], params, metrics
@@ -100,14 +103,15 @@ class GlobalSignalClassifier:
         else:
             params = dict(self.cfg.clf_params)
             m = self._new_model(params)
-            m.fit(X_tr, ytr_i)
+            m.fit(X_tr, ytr_i, sample_weight=sw_tr)
             val_metrics = self._score(m, X_val, yval_i)
 
         # final refit on train+val with chosen params (test stays untouched)
         X_all = pd.concat([X_tr, X_val])
         y_all = pd.concat([ytr_i, yval_i])
+        sw_all = compute_sample_weight(class_weight="balanced", y=y_all) if use_bal else None
         self.model_ = self._new_model(params)
-        self.model_.fit(X_all, y_all)
+        self.model_.fit(X_all, y_all, sample_weight=sw_all)
 
         imp = pd.Series(self.model_.feature_importances_, index=self.features_)
         self.result_ = ClassifierResult(params, val_metrics,

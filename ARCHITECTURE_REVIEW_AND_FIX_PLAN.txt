@@ -1,0 +1,365 @@
+================================================================================
+ARCHITECTURE_REVIEW_AND_FIX_PLAN
+DBTS Train-Only Diagnostic — Fresh-Start Inspection
+Author : GitHub Copilot
+Date   : 2026-06-03
+Scope  : c:\algo-trading-project (DBTS_Train_Only_Diagnostic_FIXED.ipynb)
+Status : PLAN ONLY. No code changes. No notebook execution. Awaiting approval.
+================================================================================
+
+PURPOSE OF THIS DOCUMENT
+------------------------
+You have requested a completely fresh, in-sample (TRAIN-only) execution of the
+DBTS diagnostic for ARCHITECTURAL INSPECTION, not performance evaluation. Before
+any code runs, this document records:
+
+  (1) my reading of the CURRENT architecture as implemented today,
+  (2) the INTENDED architecture you described,
+  (3) the exact DIFFERENCES (or absence of differences),
+  (4) the DIAGNOSTICS that will prove or disprove the suspected panel bug,
+  (5) the FRESH-START cache-clearing plan,
+  (6) PROPOSED CODE CHANGES (conditional on what the diagnostic shows),
+  (7) the ASSUMPTIONS still requiring verification.
+
+Nothing in section (6) will be implemented until you approve.
+
+================================================================================
+1. MY UNDERSTANDING OF THE CURRENT ARCHITECTURE
+================================================================================
+
+Files inspected:
+  - strategy/pipeline.py         (build_panel, _sector_oos, train_classifier)
+  - strategy/strategy_config.py  (StrategyConfig, force_recompute, hash)
+  - strategy/cache.py            (CacheManager: hit/miss/force logic)
+  - DBTS_Train_Only_Diagnostic_FIXED.ipynb  (cells 1-9)
+
+1.1 Data flow (as coded TODAY in build_panel)
+---------------------------------------------
+For each sector ETF in config.SECTORS:
+  members = [sector.target] + sector.predictors           # ~6-11 tickers / sector
+  _sector_oos(...) iterates EVERY fold AND EVERY candidate (cand in members):
+       - PredictorSelector picks peers (cand excluded from its own predictors)
+       - DynamicShadowPriceModel.fit_predict(... cand ...)
+       - DynamicReturnModel.fit_predict(... cand ...)
+       - For each predict-date d in fold.predict_idx:
+            records.append(dict(date=d, candidate=cand,
+                                candidate_price, shadow_price,
+                                predicted_return, predictors))
+  -> Returns a DataFrame with ONE ROW PER (date, candidate).
+
+  ResidualFeatureBuilder is applied PER CANDIDATE (groupby "candidate"),
+  TechnicalRuleFeatureBuilder values are joined on (date, candidate),
+  _sector_features is called with candidate aliased to "target".
+
+  DBTS scoring inside build_panel loops over each date and ranks ALL candidates
+  using bandit_score + residual_score(|residual_z|/3) + pred_ret_score(|pr|/0.05).
+  Selected candidate is flagged via `was_selected_by_dbts`.
+
+  FINAL STEP in build_panel:
+       df = df.rename(columns={"candidate": "target",
+                               "candidate_price": "target_price"})
+  i.e. the column literally named "target" in the returned panel is the
+  CANDIDATE identifier, not the sector's static primary target.
+
+1.2 Notebook usage (Cell 8)
+---------------------------
+  panel_indexed = panel.set_index(["date", "target"])
+Because of the rename above, this index is effectively
+       (date, candidate)
+so panel_indexed SHOULD contain one row for each candidate in the sector on
+each evaluated date. DBTS in the notebook then re-scores all candidates per
+date by looking up (date, cand) keys in panel_indexed.
+
+1.3 Caching layer (relevant artifacts under .cache/)
+----------------------------------------------------
+Discovered today in c:\algo-trading-project\.cache\:
+  classifier__6c682670a810.pkl
+  feature_panel__0383ffcc8349.pkl
+  feature_panel__9e6b595b5afc.pkl
+  feature_panel__e194d6d00390.pkl
+  market_data__0296fb90c88f.pkl
+  market_data__5e021b53ff0a.pkl
+  market_data__ee72eed7e2bc.pkl
+  technical_all__6cd905d0bc03.pkl
+  technical_all__7d3b88cd32b5.pkl
+  technical_all__8647065ddef7.pkl
+
+Also discovered notebook-local cache:
+  outputs/train_only_dbts_cache/selected_panel.pkl   (if previously written)
+  outputs/train_only_dbts_cache/pm_trades.pkl
+  outputs/train_only_dbts_cache/daily_scores.pkl
+  outputs/train_only_dbts_cache/bandit_states.pkl
+
+CacheManager rules (strategy/cache.py):
+  - cfg.force_recompute=True bypasses READS but still WRITES on miss.
+  - Artifacts are keyed by name + config_hash. Old hashes are not auto-removed.
+  - The notebook (Cell 6) already deletes the active feature_panel cache file
+    keyed by the current hash, but leaves OTHER stale hash variants and
+    market_data / technical_all / classifier caches untouched.
+  - The notebook also has a `RECOMPUTE_DBTS = True` gate that controls only the
+    notebook-local cache under outputs/train_only_dbts_cache/.
+
+1.4 Order of operations in the notebook (as coded TODAY)
+--------------------------------------------------------
+  Cell 1  : TRAIN_ONLY_MODE switch
+  Cell 2  : imports + sys.path
+  Cell 3  : project imports
+  Cell 4  : helpers
+  Cell 5  : load market data + define train_idx (cfg.force_recompute=True)
+  Cell 6  : delete active feature_panel cache, build panel, fit classifier
+  Cell 6b : panel shape diagnostic
+  Cell 7  : refit per-candidate shadow + return models on TRAIN only
+            (this duplicates work done in build_panel but is needed for the
+             ADF residual time series used by DBTS in Cell 8)
+  Cell 8  : DBTS scoring loop -> selected_panel -> PositionManager -> trades
+  Cell 8b : gate pass-rate diagnostics
+  Cell 9  : portfolio metrics
+
+================================================================================
+2. MY UNDERSTANDING OF THE INTENDED ARCHITECTURE
+================================================================================
+
+For every date d:
+  For every sector S:
+    For every candidate c in members(S):
+       compute shadow_price(d, c)
+       compute predicted_return(d, c)
+       compute residual(d, c) and residual_z(d, c)
+       compute DBTS score(d, c) using bandit, residual, predicted_return, ADF
+    Rank candidates in S by DBTS score.
+    selected = argmax(score)
+    Run classifier on features of (d, selected) only -> LONG/FLAT/SHORT
+    PositionManager handles ENTER/HOLD/EXIT/FLIP for (d, selected)
+    Bandit update is deferred until the realised trade outcome is known.
+
+Key invariants you stated:
+  - DBTS chooses the target, not the classifier.
+  - residual_z and predicted_return must be available for ALL candidates, not
+    only for the static "primary" target.
+  - The classifier only decides what to do AFTER selection.
+
+================================================================================
+3. EXACT DIFFERENCES BETWEEN CURRENT AND INTENDED
+================================================================================
+
+Based on the static reading above, the CURRENT pipeline.build_panel ALREADY
+emits one row per (date, candidate) and DBTS in both build_panel and the
+notebook ALREADY scores all candidates per date. So your suspected bug
+(panel_indexed contains only one row per sector/date) is NOT obviously present
+in source. However, this MUST be verified empirically, not assumed -- per
+your instructions.
+
+Possible REAL differences / suspicious areas that the diagnostic must check:
+
+  D1. The panel column "target" is actually the candidate identifier (due to
+      the rename at the end of build_panel). If anything downstream treats
+      "target" as the sector's primary target, that code is wrong.
+
+  D2. _sector_features is called with the candidate aliased to "target" and
+      uses sect["sect_corr_pred"] etc. computed against the OTHER candidates.
+      This is correct for ranking, but the EWM-z normalization is done across
+      the joined sect frame as a single pool of (date, candidate) — must
+      confirm this does not leak sector-cross information.
+
+  D3. Cell 8 reads predicted_return DIRECTLY from panel_indexed for each
+      candidate. If predicted_return is missing for non-primary candidates in
+      panel_indexed, DBTS will fall back to pred_ret_score=0 and ranking will
+      collapse to (bandit + residual + ADF). This is the core measurable
+      hypothesis the diagnostic will test.
+
+  D4. Cell 7 rebuilds per-candidate shadow & return models AGAIN (after
+      build_panel has already done it) only to support the ADF residual
+      series. This duplication is wasteful but not architecturally wrong.
+      Will simply be flagged as a refactor candidate (NOT changed in this run).
+
+  D5. The fresh-start guarantee in the notebook is INCOMPLETE: only the
+      active feature_panel cache file is deleted; stale-hash variants and
+      market_data / technical_all / classifier caches are left on disk. Even
+      with cfg.force_recompute=True the disk is not clean, and the
+      notebook-local outputs/train_only_dbts_cache/ is gated by
+      RECOMPUTE_DBTS, not unconditionally cleared.
+
+================================================================================
+4. DIAGNOSTIC TESTS THAT WILL BE RUN
+================================================================================
+
+All diagnostics run AFTER the fresh-start purge (section 5) and AFTER
+build_panel completes. No fixes are made before the user sees the numbers.
+
+DIAG-1  Panel coverage matrix
+  For every (date, sector) pair:
+    expected_candidates = len([sector.target] + sector.predictors)
+    actual_rows         = panel.loc[panel.date == d & panel.sector == s].shape[0]
+    coverage_pct        = actual_rows / expected_candidates * 100
+  Emit:
+    outputs/diag_panel_coverage_by_date_sector.csv
+    outputs/diag_panel_coverage_summary.csv     (min/median/max coverage per sector)
+  Pass criterion (intended architecture): coverage_pct == 100 on every row.
+
+DIAG-2  Per-candidate feature availability
+  For every (sector, candidate) over the train_fit period:
+    n_rows
+    residual_z          non-NaN %
+    predicted_return    non-NaN %
+    shadow_price        non-NaN %
+    dbts_score          non-NaN %
+    was_selected_by_dbts sum    (# of dates this candidate "won")
+  Emit:
+    outputs/diag_candidate_feature_availability.csv
+
+DIAG-3  panel_indexed lookup-success rate inside Cell 8
+  For every eval_date and every candidate of that sector:
+    hits   = (date, cand) is in panel_indexed
+    pr_ok  = predicted_return present at that key
+    rz_ok  = residual_z present at that key
+  Aggregate per sector and overall.
+  Emit:
+    outputs/diag_panel_indexed_lookup.csv
+  This directly tests the hypothesis: "DBTS is fed NaNs for non-primary
+  candidates and therefore decides on bandit noise alone".
+
+DIAG-4  DBTS component contribution
+  For every selection event, decompose final_score into its 4 weighted parts.
+  Report mean/std/share of variance of each component, per sector.
+  Emit:
+    outputs/diag_dbts_component_decomposition.csv
+
+DIAG-5  Selection stability
+  Per sector: how often does the selected candidate change day-to-day, and
+  is the winner highly concentrated on one candidate? (Concentration check
+  for "DBTS always picks the same name" failure mode.)
+  Emit:
+    outputs/diag_selection_distribution.csv
+
+DIAG-6  Cache audit (printed, no file)
+  Before run: list every file under .cache/ and every file under
+              outputs/train_only_dbts_cache/.
+  Print which files are about to be DELETED, which are IGNORED (e.g. left
+  on disk but never read because force_recompute=True), and which objects
+  will be REBUILT FROM SCRATCH (market_data, technical_all, feature_panel,
+  classifier, selected_panel, pm_trades, daily_scores, bandit_states,
+  model_store, bandit).
+
+================================================================================
+5. FRESH-START / CACHE-PURGE PLAN
+================================================================================
+
+Implemented as a new first cell ("Cell 0 — Fresh start") inserted BEFORE
+"Cell 1 — TRAIN_ONLY_MODE". It performs the following, in order, with
+explicit printing:
+
+  Step 5.1  Clear notebook kernel state
+            Restart the kernel manually before running. The new Cell 0 will
+            verify by asserting that the symbols `panel`, `clf`, `trades`,
+            `selected_panel`, `model_store`, `bandit`, `panel_indexed`
+            are NOT already defined (raises if they are).
+
+  Step 5.2  Enumerate caches
+            List every file under:
+              .cache/
+              outputs/train_only_dbts_cache/
+            Print: filename, size, mtime.
+
+  Step 5.3  Delete caches
+            Unconditionally remove EVERY file under both directories above.
+            Print one line per deletion ("[delete] <path>").
+
+  Step 5.4  Re-create empty cache directories
+            Ensures the run is reproducible even if the dirs were missing.
+
+  Step 5.5  Print policy
+            "force_recompute=True will be set on StrategyConfig; any cache
+             file written during this run is acceptable, but no cache file
+             will be READ. Notebook-local RECOMPUTE_DBTS will be hard-coded
+             to True for this run."
+
+  Step 5.6  Print "WILL BE REBUILT FROM SCRATCH" list:
+              market_data        (Loader)
+              technical_all      (TechnicalRuleFeatureBuilder)
+              feature_panel      (build_panel, per-candidate rows)
+              classifier         (XGBoost, balanced weights)
+              model_store        (per-candidate shadow + return for ADF)
+              bandit             (fresh BanditTargetSelector)
+              selected_panel     (DBTS scoring loop)
+              pm_trades          (PositionManager.simulate per sector)
+              daily_scores       (per-date per-candidate component log)
+              bandit_states      (alpha/beta snapshots)
+
+  Step 5.7  Assert RECOMPUTE_DBTS = True and cfg.force_recompute = True.
+
+No previous artifact is read after this point.
+
+================================================================================
+6. PROPOSED CODE CHANGES (CONDITIONAL — DO NOT IMPLEMENT YET)
+================================================================================
+
+These are queued and will only be applied AFTER you see the diagnostics and
+approve. None are made now.
+
+  CHG-A  Add Cell 0 "Fresh start" as described in section 5.
+         Files touched: DBTS_Train_Only_Diagnostic_FIXED.ipynb
+         Reason: guarantees no cached artefact leaks into the run.
+
+  CHG-B  Add Cell 6c "Panel coverage diagnostic" (DIAG-1, DIAG-2) immediately
+         after Cell 6b.
+         Files touched: DBTS_Train_Only_Diagnostic_FIXED.ipynb only.
+         Reason: proves/disproves the suspected bug before touching the
+                 strategy code.
+
+  CHG-C  Add Cell 8c "panel_indexed lookup audit" (DIAG-3, DIAG-4, DIAG-5)
+         immediately after Cell 8.
+         Files touched: DBTS_Train_Only_Diagnostic_FIXED.ipynb only.
+         Reason: measures what DBTS actually consumed at decision time.
+
+  CHG-D  (CONDITIONAL on DIAG-1/2/3 showing coverage < 100%) Redesign
+         strategy/pipeline.py::build_panel so that it emits ONE ROW PER
+         CANDIDATE PER DATE with full residual_z and predicted_return,
+         not one row per selected target. Per current code reading, this
+         change is likely NOT needed — but it is queued in case the
+         diagnostic disagrees with the static analysis.
+
+  CHG-E  (CONDITIONAL on DIAG-4 showing bandit dominates variance with
+         residual/pred_ret components stuck at 0) Trace why those components
+         collapse: most likely cause is candidates falling outside the
+         walk-forward predict_idx of any fold and therefore missing from
+         _sector_oos output. Fix would be to ensure every candidate is
+         covered by every fold's predict_idx.
+
+  NO change to:
+    - DBTS weights
+    - PositionManager thresholds
+    - Classifier hyperparameters
+    - Splits or fold logic (except to verify candidate coverage)
+    - Any architectural choice you have already locked
+
+================================================================================
+7. ASSUMPTIONS STILL REQUIRING VERIFICATION
+================================================================================
+
+  A1. SECTORS in config.py defines, for each sector, a single "target" plus a
+      list of "predictors", and the candidate universe for DBTS ranking is
+      the union of the two. (Reading: confirmed by _sector_oos line
+      `members = [cfg_sector["target"]] + cfg_sector["predictors"]`.)
+
+  A2. The notebook's `panel.set_index(["date", "target"])` resolves correctly
+      with the column named "target" being the candidate identifier post-rename.
+      To be confirmed by DIAG-1 which counts rows per (date, sector).
+
+  A3. _sector_oos covers every train_fit date for every candidate via the
+      union of all folds' predict_idx. If any candidate falls outside every
+      fold's predict window, its rows will be missing — to be confirmed by
+      DIAG-2 (per-candidate row count).
+
+  A4. cfg.force_recompute=True is honoured by CacheManager and is not
+      overridden anywhere downstream. (Reading: confirmed in cache.py.)
+
+  A5. The classifier in Cell 6 truly trains on the entire TRAIN-only panel
+      (`data = panel.dropna(subset=["label"])`) and not on a subset shaped
+      by an unintended index filter. (Confirmed by reading Cell 6.)
+
+  A6. The notebook-local cache directory outputs/train_only_dbts_cache/ is
+      not referenced by any other code path. (To be confirmed by grep.)
+
+================================================================================
+END OF PLAN. Awaiting your approval before making any code or notebook edits.
+================================================================================

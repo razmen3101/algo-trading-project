@@ -77,6 +77,18 @@ class StrategyConfig:
     negative_threshold:   float = -0.01
     vol_adjusted_labels:  bool = False   # if True, thresholds scale by rolling vol
 
+    # ---- Reversion-based labels (OPTION C, validated in DBTS diagnostic) ----
+    # When True, build_panel produces classifier labels from residual_z dynamics
+    # instead of forward returns. This switches the engine from "predict next-day
+    # return direction" to "predict whether the pair will mean-revert".
+    use_reversion_labels:   bool  = True
+    reversion_label_horizon: int   = 5
+    reversion_entry_band:    float = 1.0
+    reversion_close_band:    float = 0.5
+    # When True, classifier.fit uses class_weight='balanced' sample weights.
+    # Required for reversion labels (~80% flat).
+    use_class_balanced_weights: bool = True
+
     # ---- Global classifier (XGBoost) ----
     clf_params: dict = field(default_factory=lambda: dict(
         n_estimators=400, learning_rate=0.03, max_depth=3,

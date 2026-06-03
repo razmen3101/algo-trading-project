@@ -224,6 +224,10 @@ class StrategyPipeline:
                 # ---- residual features per candidate ----
                 resid_parts = []
                 label_parts = []
+                use_rev = bool(getattr(self.cfg, "use_reversion_labels", False))
+                rev_h     = int(getattr(self.cfg, "reversion_label_horizon", 5))
+                rev_entry = float(getattr(self.cfg, "reversion_entry_band", 1.0))
+                rev_close = float(getattr(self.cfg, "reversion_close_band", 0.5))
                 for cand, sub in oos.groupby("candidate", sort=False):
                     sub = sub.sort_values("date")
                     price = sub.set_index("date")["candidate_price"]
@@ -233,7 +237,20 @@ class StrategyPipeline:
                     resid_sub = rfb.build(price, shadow, pret.reindex(price.index), fwd_sub)
                     resid_sub["candidate"] = cand
                     resid_parts.append(resid_sub)
-                    label_parts.append(make_labels_from_fwd(fwd_sub, self.cfg).rename(cand))
+                    if use_rev:
+                        # Reversion labels derived from residual_z dynamics.
+                        # +1: cheap (rz<-entry) AND drifted up by close_band over rev_h
+                        # -1: expensive (rz>+entry) AND drifted down by close_band over rev_h
+                        rz = resid_sub["residual_ewm_z"].astype(float)
+                        rz_future = rz.shift(-rev_h)
+                        delta = rz_future - rz
+                        rlab = pd.Series(0.0, index=rz.index)
+                        rlab[(rz < -rev_entry) & (delta >  rev_close)] = 1.0
+                        rlab[(rz >  rev_entry) & (delta < -rev_close)] = -1.0
+                        rlab[rz.isna() | rz_future.isna()] = np.nan
+                        label_parts.append(rlab.rename(cand))
+                    else:
+                        label_parts.append(make_labels_from_fwd(fwd_sub, self.cfg).rename(cand))
 
                 resid = (pd.concat(resid_parts)
                          .set_index("candidate", append=True)
@@ -258,8 +275,18 @@ class StrategyPipeline:
 
                 # ---- assemble per-candidate frame ----
                 df = oos.set_index(["date", "candidate"]).copy()
-                df = df.drop(columns=["predicted_return"])
-                resid_join = [c for c in resid_cols if c != "shadow_price"]
+                # Keep predicted_return (walk-forward OOS value) in the panel so
+                # that DBTS scoring in Cell 8 reads the temporally-consistent value
+                # rather than a full-train static model prediction.
+                # It is excluded from classifier features via the `excluded` list in Cell 6.
+                # Also drop "predicted_return" from the resid join: `df` already
+                # holds the OOS predicted_return from _sector_oos, and the resid
+                # frame carries the same column verbatim (used internally to
+                # derive predicted_return_ewm_z / _rank / _percentile etc.).
+                # Without this guard, .join() raises:
+                #   "columns overlap but no suffix specified: ['predicted_return']"
+                resid_join = [c for c in resid_cols
+                              if c not in ("shadow_price", "predicted_return")]
                 df = df.join(resid[resid_join]).join(tech_rows).join(sect)
                 df["next_ret"] = self._next_return_cand(md, oos).values
                 df["ann_vol"] = self._trailing_vol_cand(md, oos).values
