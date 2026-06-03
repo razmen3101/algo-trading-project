@@ -97,13 +97,13 @@ class DynamicShadowPriceModel:
                            base_idx: pd.Index | pd.DatetimeIndex) -> tuple[pd.DataFrame, pd.Series, float]:
         idx = pd.Index(base_idx)
         if len(idx) == 0:
-            return pd.DataFrame(index=prices.index), pd.Series(dtype=float), float("nan")
+            return pd.DataFrame(index=prices.index), pd.Series(dtype=float, name="_y"), float("nan")
 
         target_series = pd.to_numeric(prices[target], errors="coerce").astype(float)
         target_series = target_series.where(target_series > 0)
         target_base = target_series.reindex(idx).dropna()
         if target_base.empty:
-            return pd.DataFrame(index=prices.index), pd.Series(dtype=float), float("nan")
+            return pd.DataFrame(index=prices.index), pd.Series(dtype=float, name="_y"), float("nan")
 
         base_target_price = float(target_base.iloc[0])
         y = _safe_log_ratio(target_series, base_target_price).rename("_y")

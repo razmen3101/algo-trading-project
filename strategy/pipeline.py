@@ -19,6 +19,8 @@ from dataclasses import dataclass
 import numpy as np
 import pandas as pd
 
+import math
+
 from config import SECTORS
 from data.loader import Loader
 from strategy.strategy_config import StrategyConfig
@@ -29,6 +31,7 @@ from strategy.predictor_selector import PredictorSelector
 from strategy.regressors import DynamicShadowPriceModel, DynamicReturnModel
 from strategy.residual_features import ResidualFeatureBuilder
 from strategy.technical_features import TechnicalRuleFeatureBuilder
+from strategy.bandit_target_selector import BanditTargetSelector
 from strategy.classifier import GlobalSignalClassifier
 from strategy.backtester import Backtester
 from sklearn.metrics import r2_score
@@ -78,102 +81,76 @@ class StrategyPipeline:
     # 2-3. walk-forward OOS shadow price / return per sector
     # ================================================================== #
     def _sector_oos(self, etf, cfg_sector, md, folds, split):
-        """Return per-date OOS frame for one sector with dynamic target/predictors."""
+        """Return per-date OOS frame for one sector.
+
+        Each row is one (date, candidate) pair — regressors are fit and
+        predicted for ALL candidates, not just the fold-level selected target.
+        This is required so that DBTS can score every candidate with its own
+        residual_z / predicted_return *before* making a selection decision.
+        """
         members = [cfg_sector["target"]] + cfg_sector["predictors"]
         prices, returns, volumes = md.prices, md.returns, md.volumes
-        etf_ret = returns[etf] if etf in returns else None
 
-        tsel = TargetSelectionEngine(self.cfg, mode=self.cfg.target_selection_mode)
         psel = PredictorSelector(self.cfg)
-        shadow_m = DynamicShadowPriceModel(self.cfg)
-        return_m = DynamicReturnModel(self.cfg)
 
         records = []
-        prev_target = None
-        prev_predictors: set[str] | None = None
         for fold in folds:
             tr_idx, pr_idx = fold.train_idx, fold.predict_idx
-            # validation slice = the val region inside the train window (for scoring)
             val_idx = tr_idx[(tr_idx >= split.train_end) & (tr_idx < split.val_end)]
 
-            # ---- dynamic target (history only) ----
-            # returns drops the first calendar date (pct_change), so reindex
-            # the returns-based slices onto tr_idx (missing rows -> NaN, dropped).
-            tc = tsel.select(etf, cfg_sector["name"], members,
-                             prices, returns, volumes,
-                             None if etf_ret is None else etf_ret,
-                             train_idx=tr_idx, predict_idx=pr_idx, split=split)
-            target = tc.target
-            cands = [m for m in members if m != target]
+            for cand in members:
+                if cand not in prices.columns:
+                    continue
+                peers = [m for m in members if m != cand and m in prices.columns]
+                if not peers:
+                    continue
 
-            # ---- dynamic predictors (history only, LASSO/ElasticNet) ----
-            preds = tc.selected_predictors or psel.select(target, cands, returns.reindex(tr_idx), prices.loc[tr_idx]).selected
-            pc = psel.select(target, cands, returns.reindex(tr_idx), prices.loc[tr_idx])
+                # ---- predictor selection (history only) ----
+                pc = psel.select(cand, peers, returns.reindex(tr_idx), prices.loc[tr_idx])
+                preds = pc.selected
 
-            # ---- regressors (fit history, predict OOS block) ----
-            sh = shadow_m.fit_predict(prices, target, preds, tr_idx, pr_idx, val_idx)
-            rr = return_m.fit_predict(prices, target, preds, tr_idx, pr_idx, val_idx)
+                # ---- regressors: fit on train, predict OOS block ----
+                shadow_m = DynamicShadowPriceModel(self.cfg)
+                return_m = DynamicReturnModel(self.cfg)
+                sh = shadow_m.fit_predict(prices, cand, preds, tr_idx, pr_idx, val_idx)
+                rr = return_m.fit_predict(prices, cand, preds, tr_idx, pr_idx, val_idx)
 
-            pr_dates = pd.Index(pr_idx)
-            sh_eval = pd.DataFrame({
-                "actual": prices[target].reindex(pr_dates),
-                "pred": sh.shadow_price.reindex(pr_dates),
-            }).dropna()
-            shadow_oos_r2 = float(r2_score(sh_eval["actual"], sh_eval["pred"])) if len(sh_eval) > 5 else float("nan")
+                pr_dates = pd.Index(pr_idx)
+                sh_eval = pd.DataFrame({
+                    "actual": prices[cand].reindex(pr_dates),
+                    "pred": sh.shadow_price.reindex(pr_dates),
+                }).dropna()
+                shadow_oos_r2 = float(r2_score(sh_eval["actual"], sh_eval["pred"])) if len(sh_eval) > 5 else float("nan")
 
-            h = self.cfg.return_horizon
-            fwd = prices[target].shift(-h) / prices[target] - 1.0
-            rr_eval = pd.DataFrame({
-                "actual": fwd.reindex(pr_dates),
-                "pred": rr.predicted_return.reindex(pr_dates),
-            }).dropna()
-            return_oos_r2 = float(r2_score(rr_eval["actual"], rr_eval["pred"])) if len(rr_eval) > 5 else float("nan")
+                h = self.cfg.return_horizon
+                fwd = prices[cand].shift(-h) / prices[cand] - 1.0
+                rr_eval = pd.DataFrame({
+                    "actual": fwd.reindex(pr_dates),
+                    "pred": rr.predicted_return.reindex(pr_dates),
+                }).dropna()
+                return_oos_r2 = float(r2_score(rr_eval["actual"], rr_eval["pred"])) if len(rr_eval) > 5 else float("nan")
 
-            cur_predictors = set(preds)
-            predictor_jaccard = float("nan")
-            predictor_turnover = float("nan")
-            target_turnover = 0
-            if prev_predictors is not None:
-                union = prev_predictors | cur_predictors
-                predictor_jaccard = len(prev_predictors & cur_predictors) / len(union) if union else float("nan")
-                predictor_turnover = 1.0 - predictor_jaccard if np.isfinite(predictor_jaccard) else float("nan")
-            if prev_target is not None:
-                target_turnover = int(target != prev_target)
+                self.log_rows.append(dict(
+                    sector=cfg_sector["name"], etf=etf,
+                    retrain_date=fold.retrain_date.date(),
+                    candidate=cand, selected_predictors=",".join(preds),
+                    shadow_val_r2=round(sh.val_r2, 4),
+                    return_val_r2=round(rr.val_r2, 4),
+                    shadow_oos_r2=round(shadow_oos_r2, 4) if np.isfinite(shadow_oos_r2) else np.nan,
+                    return_oos_r2=round(return_oos_r2, 4) if np.isfinite(return_oos_r2) else np.nan,
+                    top_coefficients=",".join(f"{k}:{v:.3f}" for k, v in pc.coefficients.head(3).items()),
+                ))
 
-            self.log_rows.append(dict(
-                sector=cfg_sector["name"], etf=etf, retrain_date=fold.retrain_date.date(),
-                selector_mode=tc.mode,
-                selected_target=target, selected_predictors=",".join(preds),
-                selection_score=tc.selected_score,
-                meta_prediction=tc.meta_prediction,
-                shadow_val_r2=round(sh.val_r2, 4), return_val_r2=round(rr.val_r2, 4),
-                shadow_oos_r2=round(shadow_oos_r2, 4) if np.isfinite(shadow_oos_r2) else np.nan,
-                return_oos_r2=round(return_oos_r2, 4) if np.isfinite(return_oos_r2) else np.nan,
-                target_turnover=target_turnover,
-                predictor_jaccard=round(predictor_jaccard, 4) if np.isfinite(predictor_jaccard) else np.nan,
-                predictor_turnover=round(predictor_turnover, 4) if np.isfinite(predictor_turnover) else np.nan,
-                top_coefficients=",".join(f"{k}:{v:.3f}" for k, v in pc.coefficients.head(3).items()),
-            ))
+                for d in pr_idx:
+                    records.append(dict(
+                        date=d, etf=etf, sector=cfg_sector["name"],
+                        candidate=cand,
+                        candidate_price=prices.at[d, cand],
+                        shadow_price=sh.shadow_price.get(d, np.nan),
+                        predicted_return=rr.predicted_return.get(d, np.nan),
+                        predictors=tuple(preds),
+                    ))
 
-            prev_target = target
-            prev_predictors = cur_predictors
-
-            if isinstance(tc.scores, pd.DataFrame) and not tc.scores.empty:
-                sel = tc.scores.copy()
-                sel["sector"] = cfg_sector["name"]
-                sel["etf"] = etf
-                sel["retrain_date"] = fold.retrain_date.date()
-                sel["selector_mode"] = tc.mode
-                sel["selected_target"] = target
-                self.selection_rows.extend(sel.to_dict("records"))
-
-            for d in pr_idx:
-                records.append(dict(date=d, etf=etf, sector=cfg_sector["name"],
-                                    target=target,
-                                    target_price=prices.at[d, target],
-                                    shadow_price=sh.shadow_price.get(d, np.nan),
-                                    predicted_return=rr.predicted_return.get(d, np.nan),
-                                    predictors=tuple(preds)))
         return pd.DataFrame(records)
 
     # ================================================================== #
@@ -226,61 +203,144 @@ class StrategyPipeline:
             tech = self._technical_all(md)
             rfb = ResidualFeatureBuilder(self.cfg)
             sector_keys = list(SECTORS.keys())
+            # one bandit shared across all sectors, walk-forward updated as we go
+            bandit = BanditTargetSelector(self.cfg)
+            # pending bandit updates: {(sector, candidate): entry_date}
+            # deferred until trade closes (label_horizon days later)
+            pending_bandit: dict[tuple, dict] = {}
+
             panels = []
             for etf, cfg_sector in SECTORS.items():
-                hr(f"OOS modelling — {cfg_sector['name']} ({etf})")
+                sector_name = cfg_sector["name"]
+                members = [cfg_sector["target"]] + cfg_sector["predictors"]
+                hr(f"OOS modelling — {sector_name} ({etf})")
+
+                # _sector_oos now returns one row per (date, candidate)
                 oos = self._sector_oos(etf, cfg_sector, md, folds, split)
                 if oos.empty:
                     continue
-                oos = oos.sort_values("date").reset_index(drop=True)
+                oos = oos.sort_values(["date", "candidate"]).reset_index(drop=True)
 
-                # residual / anomaly features are normalized per target ticker so
-                # the active target switch inside a sector never mixes scales.
+                # ---- residual features per candidate ----
                 resid_parts = []
                 label_parts = []
-                for target, sub in oos.groupby("target", sort=False):
+                for cand, sub in oos.groupby("candidate", sort=False):
                     sub = sub.sort_values("date")
-                    price = sub.set_index("date")["target_price"]
+                    price = sub.set_index("date")["candidate_price"]
                     shadow = sub.set_index("date")["shadow_price"]
                     pret = sub.set_index("date")["predicted_return"]
-                    fwd_sub = self._forward_return(md, sub, self.cfg.label_horizon)
+                    fwd_sub = self._forward_return_cand(md, sub, self.cfg.label_horizon)
                     resid_sub = rfb.build(price, shadow, pret.reindex(price.index), fwd_sub)
-                    resid_sub["target"] = target
+                    resid_sub["candidate"] = cand
                     resid_parts.append(resid_sub)
-                    label_parts.append(make_labels_from_fwd(fwd_sub, self.cfg).rename(target))
-                resid = pd.concat(resid_parts).set_index("target", append=True).reorder_levels([0, 1]).sort_index()
+                    label_parts.append(make_labels_from_fwd(fwd_sub, self.cfg).rename(cand))
+
+                resid = (pd.concat(resid_parts)
+                         .set_index("candidate", append=True)
+                         .reorder_levels([0, 1])
+                         .sort_index())
                 labels = pd.concat(label_parts, axis=1).stack().sort_index()
                 resid_cols = ResidualFeatureBuilder.feature_columns(resid)
 
-                # technical features per row (active target on that date)
+                # ---- technical features per (date, candidate) ----
                 tech_rows = pd.DataFrame(
-                    [tech[t].loc[d] if d in tech[t].index else pd.Series(dtype=float)
-                     for d, t in zip(oos["date"], oos["target"])]
-                ).set_index(pd.MultiIndex.from_arrays([oos["date"].values, oos["target"].values], names=["date", "target"]))
+                    [tech[t].loc[d] if (t in tech and d in tech[t].index) else pd.Series(dtype=float)
+                     for d, t in zip(oos["date"], oos["candidate"])]
+                ).set_index(pd.MultiIndex.from_arrays(
+                    [oos["date"].values, oos["candidate"].values],
+                    names=["date", "candidate"]))
 
-                # sector features
-                sect = self._sector_features(md, oos, etf)
+                # ---- sector features per (date, candidate) ----
+                # reuse _sector_features by aliasing candidate→target column
+                oos_alias = oos.rename(columns={"candidate": "target", "candidate_price": "target_price"})
+                sect = self._sector_features(md, oos_alias, etf)
+                sect.index.names = ["date", "candidate"]
 
-                df = oos.set_index(["date", "target"]).copy()
-                # df already carries shadow_price (kept for plots); take the rest
-                # of the residual features from the builder, incl. predicted_return.
+                # ---- assemble per-candidate frame ----
+                df = oos.set_index(["date", "candidate"]).copy()
                 df = df.drop(columns=["predicted_return"])
                 resid_join = [c for c in resid_cols if c != "shadow_price"]
                 df = df.join(resid[resid_join]).join(tech_rows).join(sect)
-                df["next_ret"] = self._next_return(md, oos).values
-                df["ann_vol"] = self._trailing_vol(md, oos).values
+                df["next_ret"] = self._next_return_cand(md, oos).values
+                df["ann_vol"] = self._trailing_vol_cand(md, oos).values
                 df["label"] = labels.reindex(df.index).values
                 df["residual_z"] = resid["residual_ewm_z"]
-                # spread signal: overpriced (resid_z>0) -> short, underpriced -> long
                 df["spread_signal"] = -np.sign(df["residual_z"].fillna(0)).astype(int)
-                # sector one-hot
                 for k in sector_keys:
                     df[f"oh_{k}"] = int(etf == k)
                 df["date"] = df.index.get_level_values(0)
-                df["target"] = df.index.get_level_values(1)
-                panels.append(df.reset_index(drop=True))
+                df["candidate"] = df.index.get_level_values(1)
+                df = df.reset_index(drop=True)
+
+                # ---- DBTS scoring + bandit walk-forward (chronological) ----
+                bandit.init_sector(sector_name, members)
+                df["dbts_score"] = float("nan")
+                df["was_selected_by_dbts"] = 0
+
+                dates_sorted = sorted(df["date"].unique())
+                # deferred bandit rewards keyed by (sector, candidate, close_date)
+                close_date_rewards: dict[tuple, float] = {}
+
+                for d in dates_sorted:
+                    # flush any pending deferred bandit updates for today
+                    keys_to_flush = [k for k in close_date_rewards if k[2] <= d]
+                    for k in keys_to_flush:
+                        pnl = close_date_rewards.pop(k)
+                        bandit.update(k[0], k[1], pnl)
+
+                    day_mask = df["date"] == d
+                    day_rows = df.loc[day_mask]
+                    bandit_samples = bandit.sample_scores(sector_name)
+
+                    scores = {}
+                    for _, row in day_rows.iterrows():
+                        cand = row["candidate"]
+                        rz = float(row.get("residual_z", float("nan")))
+                        pr = float(row.get("predicted_return_ewm_z", float("nan")))
+                        # use raw predicted_return from oos if ewm_z not yet available
+                        if not math.isfinite(pr):
+                            pr = 0.0
+
+                        residual_score = min(abs(rz) / 3.0, 1.0) if math.isfinite(rz) else 0.0
+                        pred_ret_score = abs(max(-1.0, min(1.0, pr / 0.05))) if math.isfinite(pr) else 0.0
+
+                        # ADF score: not recomputed here (expensive); use residual
+                        # magnitude as proxy — can be extended later
+                        bandit_score = bandit_samples.get(cand, 0.5)
+                        final_score = (0.40 * bandit_score
+                                       + 0.35 * residual_score
+                                       + 0.25 * pred_ret_score)
+                        scores[cand] = final_score
+
+                    if scores:
+                        selected = max(scores, key=lambda c: scores[c])
+                        for idx, row in day_rows.iterrows():
+                            df.at[idx, "dbts_score"] = scores.get(row["candidate"], float("nan"))
+                            df.at[idx, "was_selected_by_dbts"] = int(row["candidate"] == selected)
+
+                        # schedule deferred bandit update at close_date = d + label_horizon
+                        h = self.cfg.label_horizon
+                        all_dates = list(md.prices.index)
+                        try:
+                            di = all_dates.index(d)
+                            close_date = all_dates[di + h] if di + h < len(all_dates) else None
+                        except ValueError:
+                            close_date = None
+
+                        if close_date is not None:
+                            sel_rows = df[(df["date"] == d) & (df["candidate"] == selected)]
+                            if not sel_rows.empty:
+                                realized = float(sel_rows.iloc[0].get("next_ret", float("nan")))
+                                if math.isfinite(realized):
+                                    close_date_rewards[(sector_name, selected, close_date)] = realized
+
+                # rename candidate → target for downstream compatibility
+                df = df.rename(columns={"candidate": "target", "candidate_price": "target_price"})
+                panels.append(df)
+
             panel = pd.concat(panels, ignore_index=True)
             return {"panel": panel, "retrain_log": pd.DataFrame(self.log_rows), "selection_log": pd.DataFrame(self.selection_rows)}
+
         obj = self.cache.cached("feature_panel", _build, "panel", verbose=True)
         if isinstance(obj, dict):
             self.log_rows = obj.get("retrain_log", pd.DataFrame()).to_dict("records")
@@ -290,11 +350,38 @@ class StrategyPipeline:
         self.selection_rows = []
         return obj
 
-    # ---- per-ticker return lookups (active target varies by row) -------- #
+    # ---- per-ticker return lookups (candidate varies by row) ----------- #
+    @staticmethod
+    def _forward_return_cand(md, oos, h):
+        out = []
+        for d, t in zip(oos["date"], oos["candidate"]):
+            s = md.prices[t]
+            fut = s.shift(-h)
+            out.append(fut.get(d, np.nan) / s.get(d, np.nan) - 1.0)
+        return pd.Series(out, index=oos["date"].values)
+
+    @staticmethod
+    def _next_return_cand(md, oos):
+        out = []
+        for d, t in zip(oos["date"], oos["candidate"]):
+            s = md.prices[t]
+            out.append(s.shift(-1).get(d, np.nan) / s.get(d, np.nan) - 1.0)
+        return pd.Series(out, index=oos["date"].values)
+
+    @staticmethod
+    def _trailing_vol_cand(md, oos):
+        out = []
+        for d, t in zip(oos["date"], oos["candidate"]):
+            v = md.returns[t].rolling(20).std().shift(1) * np.sqrt(252)
+            out.append(v.get(d, np.nan))
+        return pd.Series(out, index=oos["date"].values)
+
+    # kept for backward compatibility with any external callers
     @staticmethod
     def _forward_return(md, oos, h):
+        col = "candidate" if "candidate" in oos.columns else "target"
         out = []
-        for d, t in zip(oos["date"], oos["target"]):
+        for d, t in zip(oos["date"], oos[col]):
             s = md.prices[t]
             fut = s.shift(-h)
             out.append(fut.get(d, np.nan) / s.get(d, np.nan) - 1.0)
@@ -302,18 +389,18 @@ class StrategyPipeline:
 
     @staticmethod
     def _next_return(md, oos):
+        col = "candidate" if "candidate" in oos.columns else "target"
         out = []
-        for d, t in zip(oos["date"], oos["target"]):
+        for d, t in zip(oos["date"], oos[col]):
             s = md.prices[t]
             out.append(s.shift(-1).get(d, np.nan) / s.get(d, np.nan) - 1.0)
         return pd.Series(out, index=oos["date"].values)
 
     @staticmethod
     def _trailing_vol(md, oos):
-        """Annualized 20d realized vol of the active target, shifted(1)
-        (observable at t) — feeds the backtest's high-volatility filter."""
+        col = "candidate" if "candidate" in oos.columns else "target"
         out = []
-        for d, t in zip(oos["date"], oos["target"]):
+        for d, t in zip(oos["date"], oos[col]):
             v = md.returns[t].rolling(20).std().shift(1) * np.sqrt(252)
             out.append(v.get(d, np.nan))
         return pd.Series(out, index=oos["date"].values)

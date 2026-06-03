@@ -105,8 +105,16 @@ class DBTSRunner:
 
         trade_log_rows = []
         daily_scores_rows = []
+        # deferred bandit updates: keyed by close_date → list of (sector, candidate, pnl)
+        pending_bandit_updates: dict = {}
 
         for date in test_dates:
+            # flush deferred bandit updates whose close_date <= today
+            flush_keys = [k for k in pending_bandit_updates if k <= date]
+            for k in flush_keys:
+                for sector_n, cand_n, pnl_n in pending_bandit_updates.pop(k):
+                    self.bandit.update(sector_n, cand_n, pnl_n)
+                    print(f"[dbts] bandit_deferred_update sector={sector_n} candidate={cand_n} pnl={pnl_n:.4f} close_date={k.date()}")
             print(f"[dbts] date_block={date.date()} completed_candidates={completed_candidates}")
             for etf, cfg_sector in SECTORS.items():
                 sector_name = cfg_sector["name"]
@@ -117,6 +125,7 @@ class DBTSRunner:
                 scores = {}
                 residual_z_map = {}
                 adf_p_map = {}
+                pred_ret_map = {}
                 for cand in members:
                     print(f"[dbts]     candidate={cand} stage=score_start")
                     rec = model_store.get(etf, {}).get(cand)
@@ -138,13 +147,22 @@ class DBTSRunner:
                     price_hist = md.prices[cand].reindex(predict_idx)
                     # residual series up to date
                     resid_series = (price_hist - shadow_pred).dropna()
+                    predicted_ret = float("nan")
                     if resid_series.empty:
                         residual_z = float("nan")
                     else:
-                        rf = resid_builder.build(price_hist, shadow_pred, rec["return_model"].predict(rec["return_feats"], predict_idx))
+                        pred_ret_series = rec["return_model"].predict(rec["return_feats"], predict_idx)
+                        rf = resid_builder.build(price_hist, shadow_pred, pred_ret_series)
                         residual_z = float(rf["residual_ewm_z"].get(date, float("nan")))
+                        predicted_ret = float(pred_ret_series.get(date, float("nan")))
                     residual_z_map[cand] = residual_z
+                    pred_ret_map[cand] = predicted_ret
                     residual_score = min(abs(residual_z) / 3.0, 1.0) if (residual_z == residual_z) else 0.0
+                    # predicted return score: normalize by 5% move, clip to [-1, 1]
+                    if predicted_ret == predicted_ret and math.isfinite(predicted_ret):
+                        pred_ret_score = max(-1.0, min(1.0, predicted_ret / 0.05))
+                    else:
+                        pred_ret_score = 0.0
                     # rolling ADF p-value
                     try:
                         from statsmodels.tsa.stattools import adfuller
@@ -157,19 +175,31 @@ class DBTSRunner:
                     adf_p_map[cand] = adf_p
                     adf_score = 1.0 - min(adf_p, 1.0) if adf_p == adf_p else 0.0
                     bandit_score = bandit_samples.get(cand, 0.5)
-                    final_score = 0.5 * bandit_score + 0.3 * residual_score + 0.2 * adf_score
+                    # weighted combination: Thompson Sampling (exploration) + mispricing
+                    # strength (residual) + directional forecast (return model) + spread
+                    # stationarity (ADF). pred_ret_score is signed so we take abs for
+                    # ranking — we only care *how strong* the signal is, not direction,
+                    # because the classifier decides direction later.
+                    final_score = (0.40 * bandit_score
+                                   + 0.25 * residual_score
+                                   + 0.20 * abs(pred_ret_score)
+                                   + 0.15 * adf_score)
                     scores[cand] = final_score
-                    print(f"[dbts]     candidate={cand} score_done final={final_score:.4f}")
+                    print(f"[dbts]     candidate={cand} score_done bandit={bandit_score:.3f} residual={residual_score:.3f} pred_ret={pred_ret_score:.3f} adf={adf_score:.3f} final={final_score:.4f}")
 
                 # record daily scores
                 for cand in members:
+                    _rz = residual_z_map.get(cand, float("nan"))
+                    _ap = adf_p_map.get(cand, float("nan"))
                     daily_scores_rows.append({
                         "date": date, "sector": sector_name, "candidate": cand,
                         "bandit_score": bandit_samples.get(cand, float("nan")),
-                        "residual_z": residual_z_map.get(cand, float("nan")),
-                        "residual_score": min(abs(residual_z_map.get(cand, 0.0)) / 3.0, 1.0) if residual_z_map.get(cand, cand) == residual_z_map.get(cand, cand) else float("nan"),
-                        "adf_pvalue": adf_p_map.get(cand, float("nan")),
-                        "adf_score": 1.0 - min(adf_p_map.get(cand, 1.0), 1.0) if adf_p_map.get(cand, adf_p_map.get(cand)) == adf_p_map.get(cand, adf_p_map.get(cand)) else float("nan"),
+                        "residual_z": _rz,
+                        "residual_score": min(abs(_rz) / 3.0, 1.0) if math.isfinite(_rz) else float("nan"),
+                        "predicted_return": pred_ret_map.get(cand, float("nan")),
+                        "pred_ret_score": max(-1.0, min(1.0, pred_ret_map.get(cand, 0.0) / 0.05)) if math.isfinite(pred_ret_map.get(cand, float("nan"))) else float("nan"),
+                        "adf_pvalue": _ap,
+                        "adf_score": 1.0 - min(_ap, 1.0) if math.isfinite(_ap) else float("nan"),
                         "final_score": scores.get(cand, float("nan")),
                     })
 
@@ -209,6 +239,10 @@ class DBTSRunner:
                 # execute simple trade: entry at date close, exit at date+h close
                 h = self.cfg.label_horizon
                 dates_idx = list(md.prices.index)
+                entry_price = float("nan")
+                exit_price = float("nan")
+                exit_date = None
+                realized = float("nan")
                 try:
                     i = dates_idx.index(date)
                     exit_i = i + h
@@ -218,20 +252,19 @@ class DBTSRunner:
                         exit_price = _safe_get_price(md.prices, selected, exit_date)
                         if math.isfinite(entry_price) and math.isfinite(exit_price) and entry_price > 0:
                             realized = exit_price / entry_price - 1.0
-                        else:
-                            realized = float("nan")
-                    else:
-                        exit_date = None
-                        realized = float("nan")
                 except Exception:
-                    exit_date = None
-                    realized = float("nan")
+                    pass
 
-                # update bandit
-                alpha_before, beta_before, updated = self.bandit.get_state(sector_name, selected)[0], self.bandit.get_state(sector_name, selected)[1], "none"
-                a0, b0, which = self.bandit.update(sector_name, selected, realized)
+                # deferred bandit update: only if PM actually entered a trade,
+                # scheduled for the close_date so no future info is used today.
+                pm_entered = int(signal) != 0  # classifier said long or short
+                if pm_entered and exit_date is not None and math.isfinite(realized):
+                    pending_bandit_updates.setdefault(exit_date, []).append(
+                        (sector_name, selected, realized)
+                    )
+                    print(f"[dbts]   bandit_update_scheduled sector={sector_name} candidate={selected} close_date={exit_date.date()} expected_pnl={realized:.4f}")
+
                 alpha_after, beta_after = self.bandit.get_state(sector_name, selected)
-                print(f"[dbts]   sector={sector_name} update={which} alpha={alpha_after} beta={beta_after} realized={realized}")
 
                 trade_log_rows.append({
                     "date": date, "sector": sector_name, "selected_target": selected,
@@ -240,10 +273,11 @@ class DBTSRunner:
                     "adf_pvalue": adf_p_map.get(selected, float("nan")),
                     "final_target_score": scores.get(selected, float("nan")),
                     "signal": int(signal), "P_short": p_short, "P_flat": p_flat, "P_long": p_long,
-                    "entry_date": date, "exit_date": exit_date, "entry_price": entry_price if 'entry_price' in locals() else float("nan"),
-                    "exit_price": exit_price if 'exit_price' in locals() else float("nan"), "realized_return": realized,
-                    "alpha_before": a0, "beta_before": b0, "alpha_after": alpha_after, "beta_after": beta_after,
-                    "bandit_updated": which,
+                    "entry_date": date, "exit_date": exit_date,
+                    "entry_price": entry_price, "exit_price": exit_price,
+                    "realized_return": realized,
+                    "alpha_after": alpha_after, "beta_after": beta_after,
+                    "pm_entered": pm_entered,
                 })
 
         # save outputs
