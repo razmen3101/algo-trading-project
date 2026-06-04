@@ -19,22 +19,22 @@ RUN_HISTORY = CACHE / "run_history.csv"
 # Edit this dict with the run you want to log:
 # ============================================================
 RUN = {
-    "source": "DBTS_Train_Only",   # or "DBTS_Test", "main_strategy", etc.
-    "tag":    "baseline_rz2.0_c0.70",
+    "source": "DBTS_Train_Only",
+    "tag":    "baseline_rz2.0_c0.70_DETERMINISTIC",
     "clf_trial":  None,
     "f1_val":     None,
     "rz_thr":     2.0,
     "conf":       0.70,
     "mr_exit":    0.30,
-    "total_entries":         306,
-    "sharpe":                1.0561,
-    "sortino":               1.6173,
-    "cumulative_return":     0.122,
-    "annualized_return":     0.0528,
-    "annualized_volatility": 0.05,
-    "max_drawdown":         -0.0563,
-    "win_rate_days":         0.3989,
-    "active_days":           790,
+    "total_entries":         305,
+    "sharpe":                0.8765,
+    "sortino":               1.2986,
+    "cumulative_return":     0.0964,
+    "annualized_return":     0.0420,
+    "annualized_volatility": 0.0479,
+    "max_drawdown":         -0.0562,
+    "win_rate_days":         0.3918,
+    "active_days":           826,
 }
 # ============================================================
 
