@@ -1,0 +1,344 @@
+﻿
+======================================================================
+== CELL 1
+======================================================================
+# Cell 1 Γאפ TRAIN-ONLY safety switch
+TRAIN_ONLY_MODE = True
+ALLOW_ANY_NON_TRAIN_DATA = False
+
+assert TRAIN_ONLY_MODE is True
+assert ALLOW_ANY_NON_TRAIN_DATA is False
+
+print("TRAIN-ONLY MODE ACTIVE")
+print("TRAIN used for fitting: YES")
+print("TRAIN used for DBTS diagnostics/evaluation: YES")
+print("Any non-train data used: NO")
+
+
+======================================================================
+== CELL 2
+======================================================================
+# Cell 2 Γאפ imports and project path setup
+import os
+import sys
+import math
+import warnings
+from pathlib import Path
+from datetime import datetime
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+from sklearn.metrics import confusion_matrix, classification_report
+
+warnings.filterwarnings("ignore")
+%matplotlib inline
+
+# Adjust this if your project lives elsewhere.
+PROJECT_ROOT = Path.cwd()
+if not (PROJECT_ROOT / "strategy").exists():
+    candidate = Path(r"C:\algo-trading-project")
+    if candidate.exists():
+        PROJECT_ROOT = candidate
+
+sys.path.insert(0, str(PROJECT_ROOT))
+os.chdir(PROJECT_ROOT)
+
+print(f"Project root: {PROJECT_ROOT}")
+
+
+======================================================================
+== CELL 3
+======================================================================
+# Cell 3 Γאפ project imports
+from config import SECTORS
+from strategy.strategy_config import StrategyConfig
+from strategy.pipeline import StrategyPipeline
+from strategy.splits import chrono_split, walk_forward_folds
+from strategy.predictor_selector import PredictorSelector
+from strategy.regressors import DynamicShadowPriceModel, DynamicReturnModel
+from strategy.residual_features import ResidualFeatureBuilder
+from strategy.technical_features import TechnicalRuleFeatureBuilder
+from strategy.bandit_target_selector import BanditTargetSelector
+from strategy.classifier import GlobalSignalClassifier, make_labels
+
+print("Project imports loaded.")
+
+
+======================================================================
+== CELL 4
+======================================================================
+# Cell 4 Γאפ helpers
+
+def safe_price(prices, ticker, date):
+    try:
+        v = float(prices.at[date, ticker])
+        return v if math.isfinite(v) and v > 0 else float("nan")
+    except Exception:
+        return float("nan")
+
+
+def make_actual_label(price_series, cfg):
+    return make_labels(price_series, cfg)
+
+
+def signal_name(x):
+    return {-1: "short", 0: "flat", 1: "long"}.get(int(x), str(x)) if pd.notna(x) else "nan"
+
+
+def max_drawdown(equity):
+    if equity.empty:
+        return float("nan")
+    peak = equity.cummax()
+    return float((equity / peak - 1.0).min())
+
+
+def pm_portfolio_metrics(pm_df, periods_per_year=252):
+    """
+    Portfolio metrics from PositionManager output.
+    pm_df has one row per (date, sector/target) with columns:
+      net_pnl, position, is_entry, is_exit, action, signal, date, sector, target
+    Sectors trade in parallel Γזע average net_pnl across active sectors per day,
+    then compound.
+    """
+    if pm_df.empty:
+        return pd.Series(dtype=float)
+
+    # daily portfolio return = average net_pnl across all sectors that day
+    daily_ret = pm_df.groupby("date")["net_pnl"].mean().sort_index()
+    if daily_ret.empty:
+        return pd.Series(dtype=float)
+
+    equity = (1.0 + daily_ret).cumprod()
+    cum = float(equity.iloc[-1] - 1.0)
+    n = len(daily_ret)
+    ann_ret = float((1.0 + cum) ** (periods_per_year / max(n, 1)) - 1.0)
+    ann_vol = float(daily_ret.std(ddof=1) * np.sqrt(periods_per_year)) if n > 1 else np.nan
+    sharpe = ann_ret / ann_vol if ann_vol and np.isfinite(ann_vol) and ann_vol != 0 else np.nan
+    dn = daily_ret[daily_ret < 0]
+    dn_vol = float(dn.std(ddof=1) * np.sqrt(periods_per_year)) if len(dn) > 1 else np.nan
+    sortino = ann_ret / dn_vol if dn_vol and np.isfinite(dn_vol) and dn_vol != 0 else np.nan
+
+    entries = pm_df[pm_df.get("is_entry", pd.Series(False, index=pm_df.index)) == True]
+    active = pm_df[pm_df["position"] != 0]
+
+    return pd.Series({
+        "trading_days":          n,
+        "total_entries":         int(len(entries)),
+        "long_entries":          int((entries["position"] == 1).sum()) if not entries.empty else 0,
+        "short_entries":         int((entries["position"] == -1).sum()) if not entries.empty else 0,
+        "active_days":           int((active["position"] != 0).sum()),
+        "cumulative_return":     round(cum, 4),
+        "annualized_return":     round(ann_ret, 4),
+        "annualized_volatility": round(ann_vol, 4) if np.isfinite(ann_vol) else np.nan,
+        "sharpe":                round(sharpe, 4) if np.isfinite(sharpe) else np.nan,
+        "sortino":               round(sortino, 4) if np.isfinite(sortino) else np.nan,
+        "max_drawdown":          round(max_drawdown(equity), 4),
+        "win_rate_days":         round(float((daily_ret > 0).mean()), 4),
+        "avg_daily_pnl":         round(float(daily_ret.mean()), 6),
+    })
+
+
+======================================================================
+== CELL 5
+======================================================================
+# Cell 5 Γאפ load data and define TRAIN ONLY index
+# This cell creates exactly one active date index: train_idx.
+# No validation/test index is created, counted, printed, or used.
+
+cfg = StrategyConfig(force_recompute=True, make_plots=False)
+pipeline = StrategyPipeline(cfg)
+
+print("Loading market data...")
+md = pipeline.load_data()
+split = chrono_split(md.prices.index, cfg)
+
+train_idx = pd.DatetimeIndex(split.train_idx).sort_values()
+horizon_buffer = int(max(getattr(cfg, "label_horizon", 1), getattr(cfg, "return_horizon", 1)))
+
+# Dates that can safely have forward labels/exits without looking outside train.
+train_fit_idx = train_idx[:-horizon_buffer] if len(train_idx) > horizon_buffer else train_idx[:0]
+train_run_idx = train_idx[:-horizon_buffer] if len(train_idx) > horizon_buffer else train_idx[:0]
+
+print("ACTIVE EXPERIMENT SPLIT USAGE:")
+print(f"TRAIN used for fitting: YES | {train_idx[0].date()} -> {train_idx[-1].date()} | n={len(train_idx)}")
+print(f"TRAIN safe fit/eval dates: {train_fit_idx[0].date()} -> {train_fit_idx[-1].date()} | n={len(train_fit_idx)}")
+print("Any non-train dates used: NO")
+print(f"Forward horizon buffer removed from train tail: {horizon_buffer} trading days")
+
+assert len(train_idx) > 0
+assert len(train_fit_idx) > 0
+assert train_fit_idx.max() <= train_idx.max()
+assert train_run_idx.max() <= train_idx.max()
+
+
+======================================================================
+== CELL 6
+======================================================================
+# Cell 6 Γאפ build TRAIN-only panel and fit classifier on 100% of TRAIN
+# NO internal 80/20 split. NO validation. NO test.
+# Balanced class weights are applied in the single fit call so SHORT is not suppressed.
+#
+# DIAGNOSTIC OVERRIDE: Production cfg uses min_train_days=756 which with 816
+# train days produces only 2 walk-forward folds (~59 predict dates: Jan-Apr 2024).
+# For a full-period diagnostic we override to min_train_days=120 (6 months),
+# giving ~14 folds that cover the ENTIRE train period from mid-2021 onward.
+# This does NOT change the production pipeline or strategy_config.py.
+import dataclasses
+_diag_cfg = dataclasses.replace(cfg, min_train_days=120)
+train_folds = walk_forward_folds(train_fit_idx, _diag_cfg)
+print(f"TRAIN-only folds (diagnostic, min_train_days=120): {len(train_folds)}")
+for i, f in enumerate(train_folds, 1):
+    print(f"  fold {i:02d}: train={len(f.train_idx):4d} | predict={len(f.predict_idx):3d} | retrain={f.retrain_date.date()}")
+
+# ΓפאΓפא Bug 1 fix: guarantee a fresh feature panel regardless of force_recompute ΓפאΓפא
+_panel_cache_path = pipeline.cache._path("feature_panel", "pkl", "panel")
+if _panel_cache_path.exists():
+    _panel_cache_path.unlink()
+    print(f"Deleted stale feature_panel cache: {_panel_cache_path.name}")
+else:
+    print("No stale feature_panel cache found Γאפ building fresh.")
+
+print("Building TRAIN-only feature panel...")
+panel = pipeline.build_panel(md, train_folds, split)
+panel["date"] = pd.to_datetime(panel["date"])
+panel = panel[panel["date"].isin(train_fit_idx)].copy()
+print(f"Panel rows after strict TRAIN-only filter: {len(panel):,}")
+print(f"Panel dates covered: {panel['date'].nunique()} | {panel['date'].min().date()} Γזע {panel['date'].max().date()}")
+
+excluded = (
+    "date", "etf", "sector", "target", "predictors", "target_price",
+    "shadow_price", "next_ret", "label", "spread_signal",
+    "ann_vol", "residual_z", "price_residual", "residual_ewm_mean",
+    "residual_ewm_std", "residual_roll_mean", "residual_roll_std",
+    # predicted_return is the raw walk-forward OOS regressor output.
+    # It is kept in the panel for DBTS scoring (Cell 8) but must NOT be a
+    # classifier feature Γאפ it would be a direct proxy for the label.
+    "predicted_return",
+    # --- Suspect leaks removed (per user request, 2026-06-03) ---
+    # candidate_price : raw $-level price Γזע non-stationary + ticker identity proxy
+    # dbts_score      : aggregate of residual_z + bandit posterior + predicted_return
+    #                   (residual_z & predicted_return are explicitly excluded above Γאפ
+    #                    do not let them back in via this aggregate).
+    # was_selected_by_dbts : 0/1 "did DBTS pick me today". At inference time it is
+    #                   always 1 (we only classify the selected candidate), so it
+    #                   is a soft proxy for the DBTS score itself.
+    "candidate_price", "dbts_score", "was_selected_by_dbts",
+)
+feature_cols = [c for c in panel.columns if c not in excluded]
+feature_cols = [c for c in feature_cols if pd.api.types.is_numeric_dtype(panel[c])]
+
+if not feature_cols:
+    raise ValueError("No numeric feature columns found in TRAIN-only panel.")
+
+data = panel.dropna(subset=["label"]).copy()
+X = data[feature_cols].apply(pd.to_numeric, errors="coerce")
+X = X.groupby(data["target"]).ffill().fillna(0.0)
+for c in feature_cols:
+    data[c] = X[c]
+data = data.sort_values("date")
+
+print(f"Classifier training rows Γאפ 100% TRAIN, no split: {len(data):,}")
+print("Label distribution:")
+display(data["label"].value_counts().sort_index().rename(index={-1: "short", 0: "flat", 1: "long"}).to_frame("count"))
+
+# Visibility on what dropped vs. what stayed
+_all_panel_cols = list(panel.columns)
+_dropped_excluded = [c for c in _all_panel_cols if c in excluded]
+_dropped_nonnumeric = [c for c in _all_panel_cols
+                      if c not in excluded and not pd.api.types.is_numeric_dtype(panel[c])]
+print(f"\nFeature accounting:")
+print(f"  total panel cols : {len(_all_panel_cols)}")
+print(f"  excluded         : {len(_dropped_excluded)}")
+print(f"  non-numeric      : {len(_dropped_nonnumeric)} ({_dropped_nonnumeric})")
+print(f"  classifier feats : {len(feature_cols)}")
+
+# ΓפאΓפא Fit on ALL TRAIN data with balanced class weights in one pass ΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפא
+from sklearn.utils.class_weight import compute_sample_weight
+from xgboost import XGBClassifier as _XGBCls
+
+_p = dict(cfg.clf_params)
+_p.update({"num_class": 3, "objective": "multi:softprob", "verbosity": 0,
+           "random_state": int(cfg.random_state)})
+
+_X = data[feature_cols].apply(pd.to_numeric, errors="coerce").fillna(0.0)
+_y = data["label"].map({-1: 0, 0: 1, 1: 2}).astype(int)
+_sw = compute_sample_weight(class_weight="balanced", y=_y)
+
+clf = GlobalSignalClassifier(cfg)
+clf.features_ = feature_cols
+clf_bal = _XGBCls(**_p)
+clf_bal.fit(_X, _y, sample_weight=_sw)
+clf.model_ = clf_bal
+
+_wmap = {nm: round(float(_sw[(_y == i).values].mean()), 3)
+         for i, nm in enumerate(["short", "flat", "long"])}
+print(f"\nClassifier fit complete.")
+print(f"  Samples: {len(_y):,}  |  Balanced weights: {_wmap}")
+
+imp = pd.Series(clf_bal.feature_importances_, index=feature_cols).sort_values(ascending=False)
+print("Top 20 feature importances:")
+display(imp.head(20).to_frame("importance"))
+
+
+======================================================================
+== CELL 15
+======================================================================
+# Cell 7 Γאפ fit per-sector/per-candidate shadow and return models on TRAIN only
+print("Fitting per-sector candidate models on TRAIN only...")
+
+model_store = {}
+predictor_rows = []
+bandit = BanditTargetSelector(cfg)
+completed = 0
+
+for etf, cfg_sector in SECTORS.items():
+    sector_name = cfg_sector["name"]
+    members = [cfg_sector["target"]] + cfg_sector["predictors"]
+    model_store[etf] = {}
+    print(f"[fit] sector={sector_name}, candidates={len(members)}")
+
+    for cand in members:
+        peers = [m for m in members if m != cand and m in md.prices.columns]
+        if cand not in md.prices.columns or not peers:
+            predictor_rows.append({"sector": sector_name, "candidate": cand, "status": "skipped", "predictors_used": ""})
+            continue
+
+        psel = PredictorSelector(cfg)
+        pred_choice = psel.select(cand, peers, md.returns.reindex(train_fit_idx), md.prices.loc[train_fit_idx])
+        preds = list(pred_choice.selected)
+
+        # Safety check: candidate must not be among predictors.
+        assert cand not in preds, f"Leakage: {cand} appears in its own predictors"
+
+        shadow_m = DynamicShadowPriceModel(cfg)
+        shadow_feats, _, base_price, safe_idx = shadow_m.fit(md.prices, cand, preds, train_fit_idx)
+
+        return_m = DynamicReturnModel(cfg)
+        return_feats, _, _ = return_m.fit(md.prices, cand, preds, train_idx)
+
+        model_store[etf][cand] = dict(
+            predictors=preds,
+            shadow_model=shadow_m,
+            shadow_feats=shadow_feats,
+            base_price=base_price,
+            return_model=return_m,
+            return_feats=return_feats,
+        )
+        predictor_rows.append({
+            "sector": sector_name,
+            "candidate": cand,
+            "status": "fit_done",
+            "n_predictors": len(preds),
+            "predictors_used": ",".join(preds),
+        })
+        completed += 1
+        print(f"[fit]   candidate={cand}, predictors={len(preds)}, completed={completed}")
+
+    bandit.init_sector(sector_name, members)
+
+predictor_summary = pd.DataFrame(predictor_rows)
+display(predictor_summary)
+print(f"Completed candidate models: {completed}")
+
